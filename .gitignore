@@ -1,0 +1,16 @@
+.vs
+.idea
+
+bin
+obj
+
+temp
+
+*.user
+*.g.cs
+
+output
+
+artifacts
+
+Build/appsettings.json

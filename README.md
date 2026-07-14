@@ -50,7 +50,7 @@ To emit maintenance attributes for reflection or analyzer tooling, define `ANNOT
 
 ## Documentation annotations
 
-The documentation annotations record contracts and examples directly on types and members. They live in the `TedToolkit.Annotations.Documentations` namespace and do not validate code or change runtime behavior.
+The documentation annotations record contracts and examples directly on types and members. They live in the `TedToolkit.Annotations.Documentations` namespace and do not validate code or change runtime behavior. `BehaviorCaseAttribute` usage is emitted only when `ANNOTATIONS_BEHAVIOR_CASE` is defined, keeping individual test-like scenarios out of normal assembly metadata.
 
 ```csharp
 using TedToolkit.Annotations.Documentations;
@@ -60,7 +60,7 @@ public sealed class Account
 {
     [Precondition("Amount is greater than zero.")]
     [Postcondition("The balance increases by the supplied amount.")]
-    [BehaviorCase("Amount is 10", "Balance increases by 10", hasUnitTest: true)]
+    [BehaviorCase("Amount is negative", "Throws for an invalid deposit.", exceptionType: typeof(ArgumentOutOfRangeException))]
     public void Deposit(decimal amount) { }
 }
 ```
@@ -87,6 +87,21 @@ public sealed class Inventory
 ```csharp
 [Precondition("Must be greater than zero.", typeof(ArgumentOutOfRangeException))]
 int quantity
+```
+
+`BehaviorCaseAttribute` can likewise record the exception expected for a specific behavior case. Use `BehaviorCaseAttribute<TException>` for a concise, type-safe C# 11+ form, or pass the type explicitly for earlier language versions. Define `ANNOTATIONS_BEHAVIOR_CASE` when reflection or analyzer tooling needs those annotations:
+
+```csharp
+[BehaviorCase<FormatException>("The input is malformed.", "Rejects the request.")]
+
+// C# 10 and earlier:
+[BehaviorCase("The input is malformed.", "Rejects the request.", exceptionType: typeof(FormatException))]
+```
+
+```xml
+<PropertyGroup>
+  <DefineConstants>$(DefineConstants);ANNOTATIONS_BEHAVIOR_CASE</DefineConstants>
+</PropertyGroup>
 ```
 
 Use `AssumptionAttribute` for conditions controlled outside a member and `SideEffectAttribute` for observable state changes:

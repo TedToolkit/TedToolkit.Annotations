@@ -1,6 +1,6 @@
 # TedToolkit.Annotations
 
-Lightweight attributes for making contracts, behavior, and planned maintenance visible in C# source. Documentation annotations describe code behavior. Maintenance annotations are emitted only when `ANNOTATIONS_MAINTENANCE` is defined, so they are intended for source readers and analyzers rather than runtime reflection.
+Lightweight attributes for making contracts, behavior, and planned maintenance visible in C# source. Documentation annotations describe code behavior. `BehaviorCaseAttribute` is emitted only when `ANNOTATIONS_BEHAVIOR_CASE` is defined; maintenance annotations are emitted only when `ANNOTATIONS_MAINTENANCE` is defined. These source-oriented annotations are intended for source readers and analyzers rather than runtime reflection.
 
 ## Installation
 
@@ -10,7 +10,7 @@ dotnet add package TedToolkit.Annotations
 
 ## Documentation annotations
 
-Use documentation annotations when important behavior would otherwise remain implicit in implementation comments. They do not validate code or change runtime behavior.
+Use documentation annotations when important behavior would otherwise remain implicit in implementation comments. They do not validate code or change runtime behavior. Define `ANNOTATIONS_BEHAVIOR_CASE` when tooling needs individual behavior cases in assembly metadata.
 
 ```csharp
 using TedToolkit.Annotations.Documentations;
@@ -32,7 +32,7 @@ public sealed class Cache
 | `PreconditionAttribute` | The caller must satisfy a condition before calling a member; it can record the exception type for a failed condition. |
 | `PostconditionAttribute` | A member guarantees a condition after it completes successfully. |
 | `InvariantAttribute` | A condition must remain true throughout a type's lifetime. |
-| `BehaviorCaseAttribute` | A specific input condition has important expected behavior, especially a boundary case. |
+| `BehaviorCaseAttribute` | A specific input condition has important expected behavior, especially a boundary case; it can record an expected exception. Use `BehaviorCaseAttribute<TException>` on C# 11+ for type-safe exception metadata. |
 | `AssumptionAttribute` | Code relies on an external fact or convention that it does not verify. |
 | `SideEffectAttribute` | A member causes an observable state change beyond its return value. |
 | `IdempotentAttribute` | Repeating an operation has no additional observable effect. |

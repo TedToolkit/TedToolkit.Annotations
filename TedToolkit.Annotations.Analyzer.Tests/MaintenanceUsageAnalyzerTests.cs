@@ -6,6 +6,7 @@
 // -----------------------------------------------------------------------
 
 using System.Collections.Immutable;
+using System.Globalization;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -85,6 +86,9 @@ internal sealed class MaintenanceUsageAnalyzerTests
         await Assert.That(messages).Contains("PERFORMANCE technical-debt API");
         await Assert.That(messages).Contains("Remove when: Legacy format is removed");
         await Assert.That(messages).Contains("No removal condition is specified");
+
+        var chineseMessages = string.Join("\n", diagnostics.Select(diagnostic => diagnostic.GetMessage(CultureInfo.GetCultureInfo("zh-CN"))));
+        await Assert.That(chineseMessages).Contains("调用了性能技术债 API“Sample.Process()”。原因：Avoid allocation until profiling is complete。未指定移除条件");
     }
 
     /// <summary>

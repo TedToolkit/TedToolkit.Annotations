@@ -396,8 +396,10 @@ public sealed class DisposableLifetimeAnalyzer : DiagnosticAnalyzer
                 or UsingStatementSyntax;
         }
 
-        private static string GetCallbackLifetimeName(int callbackLifetime) =>
-            callbackLifetime == 1 ? "deferred" : "subscription";
+        private static LocalizableString GetCallbackLifetimeName(int callbackLifetime) =>
+            callbackLifetime == 1
+                ? DiagnosticResources.Get("CallbackLifetimeDeferred")
+                : DiagnosticResources.Get("CallbackLifetimeSubscription");
 
         private enum ResourceStatus
         {

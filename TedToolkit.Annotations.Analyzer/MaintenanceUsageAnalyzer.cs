@@ -18,13 +18,13 @@ namespace TedToolkit.Annotations.Analyzer;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class MaintenanceUsageAnalyzer : DiagnosticAnalyzer
 {
-    private static readonly ImmutableDictionary<string, MaintenanceRule> MAINTENANCE_ATTRIBUTES =
+    private static readonly ImmutableDictionary<string, MaintenanceRule> _maintenanceAttributes =
         new Dictionary<string, MaintenanceRule>(StringComparer.Ordinal)
         {
-            ["TedToolkit.Annotations.Maintenances.WorkaroundAttribute"] = new("workaround", MaintenanceUsageDiagnostics.WorkaroundInvoked),
-            ["TedToolkit.Annotations.Maintenances.TemporaryImplementationAttribute"] = new("temporary implementation", MaintenanceUsageDiagnostics.TemporaryImplementationInvoked),
-            ["TedToolkit.Annotations.Maintenances.TechnicalDebtAttribute"] = new("technical-debt API", MaintenanceUsageDiagnostics.TechnicalDebtInvoked),
-            ["TedToolkit.Annotations.Maintenances.CleanupRequiredAttribute"] = new("cleanup-required API", MaintenanceUsageDiagnostics.CleanupRequiredInvoked),
+            ["TedToolkit.Annotations.Maintenances.WorkaroundAttribute"] = new(DiagnosticResources.Get("MaintenanceWorkaroundKind"), MaintenanceUsageDiagnostics.WorkaroundInvoked),
+            ["TedToolkit.Annotations.Maintenances.TemporaryImplementationAttribute"] = new(DiagnosticResources.Get("MaintenanceTemporaryImplementationKind"), MaintenanceUsageDiagnostics.TemporaryImplementationInvoked),
+            ["TedToolkit.Annotations.Maintenances.TechnicalDebtAttribute"] = new(DiagnosticResources.Get("TechnicalDebtKindUnknown"), MaintenanceUsageDiagnostics.TechnicalDebtInvoked),
+            ["TedToolkit.Annotations.Maintenances.CleanupRequiredAttribute"] = new(DiagnosticResources.Get("MaintenanceCleanupRequiredKind"), MaintenanceUsageDiagnostics.CleanupRequiredInvoked),
         }.ToImmutableDictionary(StringComparer.Ordinal);
 
     /// <inheritdoc />
@@ -54,28 +54,35 @@ public sealed class MaintenanceUsageAnalyzer : DiagnosticAnalyzer
             return;
 
         var attribute = target.GetAttributes().FirstOrDefault(candidate =>
-            candidate.AttributeClass is not null && MAINTENANCE_ATTRIBUTES.ContainsKey(candidate.AttributeClass.ToDisplayString()));
-        if (attribute?.AttributeClass is null || !MAINTENANCE_ATTRIBUTES.TryGetValue(attribute.AttributeClass.ToDisplayString(), out var rule))
+            candidate.AttributeClass is not null && _maintenanceAttributes.ContainsKey(candidate.AttributeClass.ToDisplayString()));
+        if (attribute?.AttributeClass is null || !_maintenanceAttributes.TryGetValue(attribute.AttributeClass.ToDisplayString(), out var rule))
             return;
 
-        var reason = attribute.ConstructorArguments.LastOrDefault().Value as string ?? "No reason was specified";
+        object reason = (object?)(attribute.ConstructorArguments.LastOrDefault().Value as string)
+            ?? DiagnosticResources.Get("MaintenanceNoReasonSpecified");
         var removeWhen = attribute.NamedArguments.FirstOrDefault(argument => argument.Key == "RemoveWhen").Value.Value as string;
-        var removalCondition = string.IsNullOrWhiteSpace(removeWhen) ? "No removal condition is specified" : $"Remove when: {removeWhen}";
-        var kind = attribute.AttributeClass.Name == "TechnicalDebtAttribute" ? $"{GetTechnicalDebtKind(attribute)} technical-debt API" : rule.MemberKind;
+        var removalCondition = string.IsNullOrWhiteSpace(removeWhen)
+            ? DiagnosticResources.Get("MaintenanceNoRemovalCondition")
+            : DiagnosticResources.Get("MaintenanceRemovalCondition", removeWhen!);
+        var kind = attribute.AttributeClass.Name == "TechnicalDebtAttribute" ? GetTechnicalDebtKind(attribute) : rule.MemberKind;
 
         context.ReportDiagnostic(Diagnostic.Create(rule.Diagnostic, context.Operation.Syntax.GetLocation(), kind,
             target.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat), reason, removalCondition));
     }
 
-    private static string GetTechnicalDebtKind(AttributeData attribute) =>
+    private static LocalizableString GetTechnicalDebtKind(AttributeData attribute) =>
         attribute.ConstructorArguments.FirstOrDefault().Value is int kind ? kind switch
         {
-            0 => "DESIGN", 1 => "COMPATIBILITY", 2 => "PERFORMANCE", 3 => "RELIABILITY", _ => "UNKNOWN",
-        } : "UNKNOWN";
+            0 => DiagnosticResources.Get("TechnicalDebtKindDesign"),
+            1 => DiagnosticResources.Get("TechnicalDebtKindCompatibility"),
+            2 => DiagnosticResources.Get("TechnicalDebtKindPerformance"),
+            3 => DiagnosticResources.Get("TechnicalDebtKindReliability"),
+            _ => DiagnosticResources.Get("TechnicalDebtKindUnknown"),
+        } : DiagnosticResources.Get("TechnicalDebtKindUnknown");
 
-    private sealed class MaintenanceRule(string memberKind, DiagnosticDescriptor diagnostic)
+    private sealed class MaintenanceRule(LocalizableString memberKind, DiagnosticDescriptor diagnostic)
     {
         public DiagnosticDescriptor Diagnostic { get; } = diagnostic;
-        public string MemberKind { get; } = memberKind;
+        public LocalizableString MemberKind { get; } = memberKind;
     }
 }

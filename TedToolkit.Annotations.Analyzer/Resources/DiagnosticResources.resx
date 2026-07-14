@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="TTA001Title" xml:space="preserve"><value>Disposable resource is disposed more than once</value></data>
+  <data name="TTA001Message" xml:space="preserve"><value>The disposable resource '{0}' is disposed more than once</value></data>
+  <data name="TTA002Title" xml:space="preserve"><value>Disposed resource is used</value></data>
+  <data name="TTA002Message" xml:space="preserve"><value>The disposable resource '{0}' is used after it was disposed</value></data>
+  <data name="TTA003Title" xml:space="preserve"><value>Transferred resource is used by the previous owner</value></data>
+  <data name="TTA003Message" xml:space="preserve"><value>The disposable resource '{0}' is used after its ownership was transferred</value></data>
+  <data name="TTA004Title" xml:space="preserve"><value>Locally owned disposable resource is not released</value></data>
+  <data name="TTA004Message" xml:space="preserve"><value>The disposable resource '{0}' is neither disposed nor transferred to another owner</value></data>
+  <data name="TTA005Title" xml:space="preserve"><value>Callback can outlive its captured resource</value></data>
+  <data name="TTA005Message" xml:space="preserve"><value>The {0} callback captures '{1}', whose lifetime can end before the callback runs</value></data>
+  <data name="CallbackLifetimeDeferred" xml:space="preserve"><value>deferred</value></data>
+  <data name="CallbackLifetimeSubscription" xml:space="preserve"><value>subscription</value></data>
+  <data name="TTA006Title" xml:space="preserve"><value>Disposable property is borrowed</value></data>
+  <data name="TTA006Message" xml:space="preserve"><value>The disposable property '{0}' is borrowed and must not be disposed by this caller</value></data>
+  <data name="TTA007Title" xml:space="preserve"><value>Disposed resource is returned</value></data>
+  <data name="TTA007Message" xml:space="preserve"><value>The disposable resource '{0}' is returned after it was disposed or scheduled for disposal</value></data>
+  <data name="TTA100Title" xml:space="preserve"><value>Workaround API is invoked</value></data>
+  <data name="TTA101Title" xml:space="preserve"><value>Temporary implementation is invoked</value></data>
+  <data name="TTA102Title" xml:space="preserve"><value>Technical-debt API is invoked</value></data>
+  <data name="TTA103Title" xml:space="preserve"><value>Cleanup-required API is invoked</value></data>
+  <data name="MaintenanceUsageMessage" xml:space="preserve"><value>The {0} '{1}' is invoked. Reason: {2}. {3}</value></data>
+  <data name="MaintenanceNoReasonSpecified" xml:space="preserve"><value>No reason was specified</value></data>
+  <data name="MaintenanceNoRemovalCondition" xml:space="preserve"><value>No removal condition is specified</value></data>
+  <data name="MaintenanceRemovalCondition" xml:space="preserve"><value>Remove when: {0}</value></data>
+  <data name="MaintenanceWorkaroundKind" xml:space="preserve"><value>workaround</value></data>
+  <data name="MaintenanceTemporaryImplementationKind" xml:space="preserve"><value>temporary implementation</value></data>
+  <data name="TechnicalDebtKindDesign" xml:space="preserve"><value>DESIGN technical-debt API</value></data>
+  <data name="TechnicalDebtKindCompatibility" xml:space="preserve"><value>COMPATIBILITY technical-debt API</value></data>
+  <data name="TechnicalDebtKindPerformance" xml:space="preserve"><value>PERFORMANCE technical-debt API</value></data>
+  <data name="TechnicalDebtKindReliability" xml:space="preserve"><value>RELIABILITY technical-debt API</value></data>
+  <data name="TechnicalDebtKindUnknown" xml:space="preserve"><value>UNKNOWN technical-debt API</value></data>
+  <data name="MaintenanceCleanupRequiredKind" xml:space="preserve"><value>cleanup-required API</value></data>
+</root>

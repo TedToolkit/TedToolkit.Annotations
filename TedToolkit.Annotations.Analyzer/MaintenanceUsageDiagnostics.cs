@@ -11,27 +11,19 @@ namespace TedToolkit.Annotations.Analyzer;
 
 internal static class MaintenanceUsageDiagnostics
 {
-    internal static readonly DiagnosticDescriptor WorkaroundInvoked = CreateDiagnostic(
-        "TTA100",
-        "Workaround API is invoked");
+    internal static readonly DiagnosticDescriptor WorkaroundInvoked = CreateDiagnostic("TTA100");
 
-    internal static readonly DiagnosticDescriptor TemporaryImplementationInvoked = CreateDiagnostic(
-        "TTA101",
-        "Temporary implementation is invoked");
+    internal static readonly DiagnosticDescriptor TemporaryImplementationInvoked = CreateDiagnostic("TTA101");
 
-    internal static readonly DiagnosticDescriptor TechnicalDebtInvoked = CreateDiagnostic(
-        "TTA102",
-        "Technical-debt API is invoked");
+    internal static readonly DiagnosticDescriptor TechnicalDebtInvoked = CreateDiagnostic("TTA102");
 
-    internal static readonly DiagnosticDescriptor CleanupRequiredInvoked = CreateDiagnostic(
-        "TTA103",
-        "Cleanup-required API is invoked");
+    internal static readonly DiagnosticDescriptor CleanupRequiredInvoked = CreateDiagnostic("TTA103");
 
-    private static DiagnosticDescriptor CreateDiagnostic(string id, string title) =>
+    private static DiagnosticDescriptor CreateDiagnostic(string id) =>
         new(
             id: id,
-            title: title,
-            messageFormat: "The {0} '{1}' is invoked. Reason: {2}. {3}",
+            title: DiagnosticResources.Get($"{id}Title"),
+            messageFormat: DiagnosticResources.Get("MaintenanceUsageMessage"),
             category: "Maintenance",
             defaultSeverity: DiagnosticSeverity.Info,
             isEnabledByDefault: true);

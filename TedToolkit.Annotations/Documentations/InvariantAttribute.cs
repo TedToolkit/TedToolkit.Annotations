@@ -14,7 +14,8 @@ namespace TedToolkit.Annotations.Documentations;
 [AttributeUsage(
     AttributeTargets.Class
     | AttributeTargets.Struct
-    | AttributeTargets.Interface,
+    | AttributeTargets.Interface
+    | AttributeTargets.Property,
     AllowMultiple = true)]
 public sealed class InvariantAttribute(string description) : DocumentationAttribute
 {

@@ -13,7 +13,9 @@ namespace TedToolkit.Annotations.Maintenances;
 /// Provides shared metadata for source-only maintenance annotations.
 /// </summary>
 /// <param name="reason">The reason the annotated code needs maintenance.</param>
-[AttributeUsage(AttributeTargets.Constructor | AttributeTargets.Method,
+[AttributeUsage(
+    AttributeTargets.Constructor
+    | AttributeTargets.Method,
     AllowMultiple = true,
     Inherited = false)]
 [Conditional("ANNOTATIONS_MAINTENANCE")]

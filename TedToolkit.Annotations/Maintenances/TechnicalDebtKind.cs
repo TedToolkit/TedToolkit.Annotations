@@ -15,20 +15,20 @@ public enum TechnicalDebtKind
     /// <summary>
     /// A compromise in the design, structure, or extensibility of the code.
     /// </summary>
-    Design = 0,
+    DESIGN = 0,
 
     /// <summary>
     /// A legacy behavior or API retained for compatibility.
     /// </summary>
-    Compatibility = 1,
+    COMPATIBILITY = 1,
 
     /// <summary>
     /// A known trade-off in execution time, memory use, allocation, or throughput.
     /// </summary>
-    Performance = 2,
+    PERFORMANCE = 2,
 
     /// <summary>
     /// A known fragility or limitation affecting resilience, error handling, or recovery.
     /// </summary>
-    Reliability = 3,
+    RELIABILITY = 3,
 }

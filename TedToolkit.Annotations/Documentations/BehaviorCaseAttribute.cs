@@ -13,7 +13,9 @@ namespace TedToolkit.Annotations.Documentations;
 /// <param name="condition">The condition under which this behavior applies.</param>
 /// <param name="expected">The expected behavior.</param>
 /// <param name="hasUnitTest">Whether a unit test covers this behavior.</param>
-[AttributeUsage(AttributeTargets.Constructor | AttributeTargets.Method,
+[AttributeUsage(
+    AttributeTargets.Constructor
+    | AttributeTargets.Method,
     AllowMultiple = true,
     Inherited = false)]
 public sealed class BehaviorCaseAttribute(

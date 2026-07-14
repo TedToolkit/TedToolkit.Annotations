@@ -14,7 +14,6 @@ namespace TedToolkit.Annotations.Documentations;
 [AttributeUsage(
     AttributeTargets.Method
     | AttributeTargets.Constructor
-    | AttributeTargets.Property
     | AttributeTargets.Parameter,
     AllowMultiple = true,
     Inherited = false)]

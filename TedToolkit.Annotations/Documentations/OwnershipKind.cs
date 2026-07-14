@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="TransfersOwnershipAttribute.cs" company="TedToolkit">
+// <copyright file="OwnershipKind.cs" company="TedToolkit">
 // Copyright (c) TedToolkit. All rights reserved.
 // Licensed under the LGPL-3.0 license. See COPYING, COPYING.LESSER file in the project root for full license information.
 // </copyright>
@@ -8,7 +8,17 @@
 namespace TedToolkit.Annotations.Documentations;
 
 /// <summary>
-/// Documents that ownership of the annotated parameter transfers to the receiving member.
+/// Specifies whether ownership changes while a value crosses an API boundary.
 /// </summary>
-[AttributeUsage(AttributeTargets.Parameter, Inherited = false)]
-public sealed class TransfersOwnershipAttribute : DocumentationAttribute;
+public enum OwnershipKind
+{
+    /// <summary>
+    /// Ownership does not change; the receiving side only borrows the value.
+    /// </summary>
+    UNCHANGED = 0,
+
+    /// <summary>
+    /// Ownership transfers to the receiving side.
+    /// </summary>
+    TRANSFERRED = 1,
+}

@@ -9,22 +9,39 @@ using Microsoft.CodeAnalysis;
 
 namespace TedToolkit.Annotations.Analyzer;
 
+/// <summary>
+/// Defines diagnostic descriptors for maintenance annotations.
+/// </summary>
 internal static class MaintenanceUsageDiagnostics
 {
+    /// <summary>
+    /// Reports invocation of a workaround.
+    /// </summary>
     internal static readonly DiagnosticDescriptor WorkaroundInvoked = CreateDiagnostic("TTA100");
 
+    /// <summary>
+    /// Reports invocation of a temporary implementation.
+    /// </summary>
     internal static readonly DiagnosticDescriptor TemporaryImplementationInvoked = CreateDiagnostic("TTA101");
 
+    /// <summary>
+    /// Reports invocation of technical debt.
+    /// </summary>
     internal static readonly DiagnosticDescriptor TechnicalDebtInvoked = CreateDiagnostic("TTA102");
 
+    /// <summary>
+    /// Reports invocation that requires cleanup.
+    /// </summary>
     internal static readonly DiagnosticDescriptor CleanupRequiredInvoked = CreateDiagnostic("TTA103");
 
-    private static DiagnosticDescriptor CreateDiagnostic(string id) =>
-        new(
+    private static DiagnosticDescriptor CreateDiagnostic(string id)
+    {
+        return new(
             id: id,
             title: DiagnosticResources.Get($"{id}Title"),
             messageFormat: DiagnosticResources.Get("MaintenanceUsageMessage"),
             category: "Maintenance",
             defaultSeverity: DiagnosticSeverity.Info,
             isEnabledByDefault: true);
+    }
 }

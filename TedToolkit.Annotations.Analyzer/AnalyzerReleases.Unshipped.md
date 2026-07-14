@@ -13,6 +13,9 @@ TTA004 | Lifetime | Warning | Locally owned disposable resource is not released
 TTA005 | Lifetime | Error | Callback can outlive its captured resource
 TTA006 | Lifetime | Error | Disposable property is borrowed
 TTA007 | Lifetime | Error | Disposed resource is returned
+TTA008 | Lifetime | Warning | Owned disposable field requires a disposable containing type
+TTA009 | Lifetime | Warning | Owned disposable field is not released
+TTA010 | Lifetime | Error | Ownership target must be disposable
 TTA100 | Maintenance | Info | Workaround API is invoked
 TTA101 | Maintenance | Info | Temporary implementation is invoked
 TTA102 | Maintenance | Info | Technical-debt API is invoked

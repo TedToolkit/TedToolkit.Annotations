@@ -16,10 +16,16 @@
   <data name="TTA005Message" xml:space="preserve"><value>The {0} callback captures '{1}', whose lifetime can end before the callback runs</value></data>
   <data name="CallbackLifetimeDeferred" xml:space="preserve"><value>deferred</value></data>
   <data name="CallbackLifetimeSubscription" xml:space="preserve"><value>subscription</value></data>
-  <data name="TTA006Title" xml:space="preserve"><value>Disposable property is borrowed</value></data>
-  <data name="TTA006Message" xml:space="preserve"><value>The disposable property '{0}' is borrowed and must not be disposed by this caller</value></data>
+  <data name="TTA006Title" xml:space="preserve"><value>Disposable resource is borrowed</value></data>
+  <data name="TTA006Message" xml:space="preserve"><value>The disposable resource '{0}' is borrowed and must not be disposed by this caller</value></data>
   <data name="TTA007Title" xml:space="preserve"><value>Disposed resource is returned</value></data>
   <data name="TTA007Message" xml:space="preserve"><value>The disposable resource '{0}' is returned after it was disposed or scheduled for disposal</value></data>
+  <data name="TTA008Title" xml:space="preserve"><value>Owned disposable field requires a disposable containing type</value></data>
+  <data name="TTA008Message" xml:space="preserve"><value>The type '{0}' owns disposable field '{1}' but does not implement IDisposable</value></data>
+  <data name="TTA009Title" xml:space="preserve"><value>Owned disposable field is not released</value></data>
+  <data name="TTA009Message" xml:space="preserve"><value>The owned disposable field '{0}' is not disposed or transferred by Dispose</value></data>
+  <data name="TTA010Title" xml:space="preserve"><value>Ownership target must be disposable</value></data>
+  <data name="TTA010Message" xml:space="preserve"><value>Ownership can be applied only to IDisposable types, but '{0}' does not implement IDisposable</value></data>
   <data name="TTA100Title" xml:space="preserve"><value>Workaround API is invoked</value></data>
   <data name="TTA101Title" xml:space="preserve"><value>Temporary implementation is invoked</value></data>
   <data name="TTA102Title" xml:space="preserve"><value>Technical-debt API is invoked</value></data>
@@ -36,4 +42,6 @@
   <data name="TechnicalDebtKindReliability" xml:space="preserve"><value>RELIABILITY technical-debt API</value></data>
   <data name="TechnicalDebtKindUnknown" xml:space="preserve"><value>UNKNOWN technical-debt API</value></data>
   <data name="MaintenanceCleanupRequiredKind" xml:space="preserve"><value>cleanup-required API</value></data>
+  <data name="PreconditionDocumentationTitle" xml:space="preserve"><value>Generate precondition exception documentation</value></data>
+  <data name="PreconditionDocumentationMessage" xml:space="preserve"><value>Precondition exceptions can be documented with XML exception elements.</value></data>
 </root>

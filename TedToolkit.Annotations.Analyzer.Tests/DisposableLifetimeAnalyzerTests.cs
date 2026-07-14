@@ -6,9 +6,11 @@
 // -----------------------------------------------------------------------
 
 using System.Collections.Immutable;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
+
 using TedToolkit.Annotations.Analyzer;
 using TedToolkit.Annotations.Documentations;
 
@@ -35,7 +37,68 @@ internal sealed class DisposableLifetimeAnalyzerTests
             "TTA005:Error",
             "TTA006:Error",
             "TTA007:Error",
+            "TTA008:Warning",
+            "TTA009:Warning",
+            "TTA010:Error",
         ]);
+    }
+
+    /// <summary>
+    /// 验证 Ownership 不能标记在非 IDisposable 的字段、属性、参数或返回值上。
+    /// </summary>
+    [Test]
+    public async Task Should_report_ownership_when_annotated_type_is_not_disposable()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Token { }
+
+            sealed class Sample
+            {
+                [Ownership(OwnershipKind.TRANSFERRED)]
+                private readonly Token _field = new Token();
+
+                [Ownership(OwnershipKind.TRANSFERRED)]
+                public Token Property => new Token();
+
+                [return: Ownership(OwnershipKind.TRANSFERRED)]
+                public Token Create([Ownership(OwnershipKind.TRANSFERRED)] Token token) => token;
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA010", "TTA010", "TTA010", "TTA010"]);
+    }
+
+    /// <summary>
+    /// 验证 Ownership 可以标记在实现 IDisposable 的字段、属性、参数和返回值上。
+    /// </summary>
+    [Test]
+    public async Task Should_not_report_ownership_when_annotated_type_is_disposable()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Sample
+            {
+                [Ownership(OwnershipKind.UNCHANGED)]
+                private readonly Resource _field = new Resource();
+
+                [Ownership(OwnershipKind.TRANSFERRED)]
+                public Resource Property => new Resource();
+
+                [return: Ownership(OwnershipKind.TRANSFERRED)]
+                public Resource Create([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) => resource;
+            }
+            """);
+
+        await Assert.That(diagnostics).IsEmpty();
     }
 
     /// <summary>
@@ -138,7 +201,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Receiver
             {
-                public void Attach([TransfersOwnership] Resource resource) { }
+                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) { }
             }
 
             sealed class Sample
@@ -265,7 +328,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Receiver
             {
-                public void Attach([TransfersOwnership] IDisposable resource) { }
+                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] IDisposable resource) { }
             }
 
             sealed class Sample
@@ -466,6 +529,608 @@ internal sealed class DisposableLifetimeAnalyzerTests
     }
 
     /// <summary>
+    /// 验证标记为借用的方法返回值不能由调用方释放。
+    /// </summary>
+    [Test]
+    public async Task Should_report_disposal_when_method_returns_borrowed_disposable()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Owner
+            {
+                [return: Ownership(OwnershipKind.UNCHANGED)]
+                public Resource GetResource() => new Resource();
+            }
+
+            sealed class Sample
+            {
+                void Execute()
+                {
+                    var resource = new Owner().GetResource();
+                    resource.Dispose();
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA006"]);
+    }
+
+    /// <summary>
+    /// 验证标记为拥有的属性返回值需要由调用方释放。
+    /// </summary>
+    [Test]
+    public async Task Should_report_leak_when_property_returns_owned_disposable()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Factory
+            {
+                [Ownership(OwnershipKind.TRANSFERRED)]
+                public Resource Create => new Resource();
+            }
+
+            sealed class Sample
+            {
+                void Execute()
+                {
+                    var resource = new Factory().Create;
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA004"]);
+    }
+
+    /// <summary>
+    /// 验证属性的输入和输出所有权流分别作用于 setter 与 getter。
+    /// </summary>
+    [Test]
+    public async Task Should_apply_ownership_flows_to_property_setter_and_getter()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Owner
+            {
+                [Ownership(OwnershipKind.TRANSFERRED, OwnershipFlow.INPUT)]
+                [Ownership(OwnershipKind.UNCHANGED, OwnershipFlow.OUTPUT)]
+                public Resource Resource { get; set; } = new Resource();
+            }
+
+            sealed class Sample
+            {
+                void Execute()
+                {
+                    var resource = new Resource();
+                    var owner = new Owner();
+                    owner.Resource = resource;
+                    resource.Dispose();
+
+                    var borrowed = owner.Resource;
+                    borrowed.Dispose();
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA003", "TTA006"]);
+    }
+
+    /// <summary>
+    /// 验证从转移参数接收可释放字段的类和结构必须实现 IDisposable。
+    /// </summary>
+    [Test]
+    [Arguments("class")]
+    [Arguments("struct")]
+    public async Task Should_report_owned_field_when_containing_type_is_not_disposable(string typeKind)
+    {
+        var diagnostics = await AnalyzeAsync($$"""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            {{typeKind}} Session
+            {
+                private readonly Resource _resource;
+
+                public Session([Ownership(OwnershipKind.TRANSFERRED)] Resource resource)
+                    => _resource = resource;
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA008"]);
+    }
+
+    /// <summary>
+    /// 验证显式拥有的字段同样要求其所在类型实现 IDisposable。
+    /// </summary>
+    [Test]
+    public async Task Should_report_explicitly_owned_field_when_containing_type_is_not_disposable()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Session
+            {
+                [Ownership(OwnershipKind.TRANSFERRED)]
+                private readonly Resource _resource;
+
+                public Session(Resource resource) => _resource = resource;
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA008"]);
+    }
+
+    /// <summary>
+    /// 验证拥有可释放字段的类和结构必须在 Dispose 中释放该字段。
+    /// </summary>
+    [Test]
+    [Arguments("class")]
+    [Arguments("struct")]
+    public async Task Should_report_owned_field_when_dispose_does_not_release_it(string typeKind)
+    {
+        var diagnostics = await AnalyzeAsync($$"""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            {{typeKind}} Session : IDisposable
+            {
+                private readonly Resource _resource;
+
+                public Session([Ownership(OwnershipKind.TRANSFERRED)] Resource resource)
+                    => _resource = resource;
+
+                public void Dispose() { }
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA009"]);
+    }
+
+    /// <summary>
+    /// 验证拥有可释放字段的类和结构在正确释放字段后不会报告诊断。
+    /// </summary>
+    [Test]
+    [Arguments("class")]
+    [Arguments("struct")]
+    public async Task Should_not_report_owned_field_when_dispose_releases_it(string typeKind)
+    {
+        var diagnostics = await AnalyzeAsync($$"""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            {{typeKind}} Session : IDisposable
+            {
+                private readonly Resource _resource;
+
+                public Session([Ownership(OwnershipKind.TRANSFERRED)] Resource resource)
+                    => _resource = resource;
+
+                public void Dispose() => _resource.Dispose();
+            }
+            """);
+
+        await Assert.That(diagnostics).IsEmpty();
+    }
+
+    /// <summary>
+    /// 验证借用字段不会要求所在类型实现 IDisposable，且不得由其释放。
+    /// </summary>
+    [Test]
+    public async Task Should_report_disposal_when_field_is_borrowed()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Session
+            {
+                [Ownership(OwnershipKind.UNCHANGED)]
+                private readonly Resource _resource;
+
+                public Session(Resource resource) => _resource = resource;
+
+                public void Dispose() => _resource.Dispose();
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA006"]);
+    }
+
+    /// <summary>
+    /// 验证静态可释放字段不归属于单个实例的释放生命周期。
+    /// </summary>
+    [Test]
+    public async Task Should_not_require_disposable_type_for_static_owned_field()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Session
+            {
+                [Ownership(OwnershipKind.TRANSFERRED)]
+                private static readonly Resource Resource = new Resource();
+            }
+            """);
+
+        await Assert.That(diagnostics).IsEmpty();
+    }
+
+    /// <summary>
+    /// 验证未标注的 out 参数默认向调用方交付所有权。
+    /// </summary>
+    [Test]
+    public async Task Should_track_out_disposable_as_owned_by_default()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Factory
+            {
+                public void Create(out Resource resource) => resource = new Resource();
+            }
+
+            sealed class Sample
+            {
+                void Execute()
+                {
+                    new Factory().Create(out var resource);
+                    resource.Dispose();
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics).IsEmpty();
+    }
+
+    /// <summary>
+    /// 验证标记为借用的 out 参数不能由调用方释放。
+    /// </summary>
+    [Test]
+    public async Task Should_report_disposal_when_out_parameter_returns_borrowed_disposable()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Owner
+            {
+                public void Get([Ownership(OwnershipKind.UNCHANGED)] out Resource resource) => resource = new Resource();
+            }
+
+            sealed class Sample
+            {
+                void Execute()
+                {
+                    new Owner().Get(out var resource);
+                    resource.Dispose();
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA006"]);
+    }
+
+    /// <summary>
+    /// 验证 ref 参数可以同时转移旧值的所有权并向调用方交付新值。
+    /// </summary>
+    [Test]
+    public async Task Should_track_ref_parameter_that_consumes_and_returns_owned_disposable()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Replacer
+            {
+                public void Replace(
+                    [Ownership(OwnershipKind.TRANSFERRED, OwnershipFlow.INPUT)]
+                    [Ownership(OwnershipKind.TRANSFERRED, OwnershipFlow.OUTPUT)]
+                    ref Resource resource) => resource = new Resource();
+            }
+
+            sealed class Sample
+            {
+                void Execute()
+                {
+                    var resource = new Resource();
+                    new Replacer().Replace(ref resource);
+                    resource.Dispose();
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics).IsEmpty();
+    }
+
+    /// <summary>
+    /// 验证属性、方法、out 参数和普通参数均使用各自的默认所有权方向。
+    /// </summary>
+    [Test]
+    [Arguments("""
+        sealed class Owner
+        {
+            public Resource Resource { get; } = new Resource();
+        }
+
+        sealed class Sample
+        {
+            void Execute() => new Owner().Resource.Dispose();
+        }
+        """, "TTA006")]
+    [Arguments("""
+        sealed class Factory
+        {
+            public Resource Create() => new Resource();
+        }
+
+        sealed class Sample
+        {
+            void Execute()
+            {
+                var resource = new Factory().Create();
+            }
+        }
+        """, "TTA004")]
+    [Arguments("""
+        sealed class Factory
+        {
+            public void Create(out Resource resource) => resource = new Resource();
+        }
+
+        sealed class Sample
+        {
+            void Execute()
+            {
+                new Factory().Create(out var resource);
+            }
+        }
+        """, "TTA004")]
+    [Arguments("""
+        sealed class Receiver
+        {
+            public void Inspect(Resource resource) { }
+        }
+
+        sealed class Sample
+        {
+            void Execute()
+            {
+                var resource = new Resource();
+                new Receiver().Inspect(resource);
+                resource.Dispose();
+            }
+        }
+        """, "")]
+    public async Task Should_infer_default_ownership_for_non_ref_boundaries(string memberDeclarations, string expectedDiagnosticId)
+    {
+        var diagnostics = await AnalyzeAsync($$"""
+            using System;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            {{memberDeclarations}}
+            """);
+
+        if (string.IsNullOrEmpty(expectedDiagnosticId))
+        {
+            await Assert.That(diagnostics).IsEmpty();
+            return;
+        }
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo([expectedDiagnosticId]);
+    }
+
+    /// <summary>
+    /// 验证 in 参数可显式将调用方资源的所有权转移给被调方。
+    /// </summary>
+    [Test]
+    public async Task Should_track_ownership_transfer_for_in_parameter()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Receiver
+            {
+                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] in Resource resource) { }
+            }
+
+            sealed class Sample
+            {
+                void Execute()
+                {
+                    var resource = new Resource();
+                    new Receiver().Attach(in resource);
+                    resource.Dispose();
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA003"]);
+    }
+
+    /// <summary>
+    /// 验证 out 参数覆盖已有所有者时会报告旧资源泄漏。
+    /// </summary>
+    [Test]
+    public async Task Should_report_leak_when_out_parameter_overwrites_owned_resource()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Factory
+            {
+                public void Create(out Resource resource) => resource = new Resource();
+            }
+
+            sealed class Sample
+            {
+                void Execute()
+                {
+                    var resource = new Resource();
+                    new Factory().Create(out resource);
+                    resource.Dispose();
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA004"]);
+    }
+
+    /// <summary>
+    /// 验证 ref 的输出转移不会隐式接管旧资源所有权。
+    /// </summary>
+    [Test]
+    public async Task Should_report_leak_when_ref_output_replaces_owned_resource_without_input_transfer()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Replacer
+            {
+                public void Replace(
+                    [Ownership(OwnershipKind.TRANSFERRED, OwnershipFlow.OUTPUT)]
+                    ref Resource resource) => resource = new Resource();
+            }
+
+            sealed class Sample
+            {
+                void Execute()
+                {
+                    var resource = new Resource();
+                    new Replacer().Replace(ref resource);
+                    resource.Dispose();
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA004"]);
+    }
+
+    /// <summary>
+    /// 验证 ref 可转移输入资源并以借用资源作为输出。
+    /// </summary>
+    [Test]
+    public async Task Should_report_disposal_when_ref_output_is_borrowed()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Replacer
+            {
+                public void Replace(
+                    [Ownership(OwnershipKind.TRANSFERRED, OwnershipFlow.INPUT)]
+                    [Ownership(OwnershipKind.UNCHANGED, OwnershipFlow.OUTPUT)]
+                    ref Resource resource) => resource = new Resource();
+            }
+
+            sealed class Sample
+            {
+                void Execute()
+                {
+                    var resource = new Resource();
+                    new Replacer().Replace(ref resource);
+                    resource.Dispose();
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA006"]);
+    }
+
+    /// <summary>
     /// 验证不能直接释放属性提供的借用资源。
     /// </summary>
     [Test]
@@ -630,7 +1295,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Receiver
             {
-                public void Attach([TransfersOwnership] Resource resource) { }
+                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) { }
                 public void Invoke([CallbackLifetime(CallbackLifetimeKind.IMMEDIATE)] Action callback) => callback();
             }
 
@@ -763,7 +1428,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Receiver
             {
-                public void Attach([TransfersOwnership] Resource resource) { }
+                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) { }
             }
 
             sealed class Sample
@@ -799,7 +1464,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Receiver
             {
-                public void Attach([TransfersOwnership] Resource resource) { }
+                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) { }
             }
 
             sealed class Factory

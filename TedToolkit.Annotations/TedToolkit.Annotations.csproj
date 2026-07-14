@@ -15,7 +15,7 @@
           Visible="false" />
   </ItemGroup>
 
-  <Target Name="BuildAnnotationsAnalyzer" BeforeTargets="GenerateNuspec">
+  <Target Name="BuildAnnotationsAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'">
     <MSBuild Projects="..\TedToolkit.Annotations.Analyzer\TedToolkit.Annotations.Analyzer.csproj"
              Targets="Build"
              Properties="Configuration=$(Configuration)" />

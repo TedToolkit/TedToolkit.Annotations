@@ -5,6 +5,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
     <PackageReference Include="TUnit" />
     <ProjectReference Include="..\TedToolkit.Annotations\TedToolkit.Annotations.csproj" />
     <ProjectReference Include="..\TedToolkit.Annotations.Analyzer\TedToolkit.Annotations.Analyzer.csproj" />

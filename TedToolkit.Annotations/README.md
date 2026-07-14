@@ -37,7 +37,7 @@ public sealed class Cache
 | `SideEffectAttribute` | A member causes an observable state change beyond its return value. |
 | `IdempotentAttribute` | Repeating an operation has no additional observable effect. |
 | `ThreadSafetyAttribute` | A type or member has a documented thread-safety guarantee or synchronization requirement. |
-| `TransfersOwnershipAttribute` | The receiving member assumes ownership of an annotated parameter. |
+| `OwnershipAttribute` | A disposable value is borrowed or its ownership is transferred across an API boundary or into a field. |
 | `CallbackLifetimeAttribute` | A callback parameter is invoked immediately, retained for deferred invocation, or retained as a subscription. |
 | `MayBlockAttribute` | An operation can block the calling thread; document the condition that causes it. |
 | `ThreadAffinityAttribute` | A type or member requires a particular thread or synchronization context. |
@@ -70,7 +70,7 @@ public sealed class Cache
     [Idempotent]
     public void Clear() { }
 
-    public void Attach([TransfersOwnership] Stream stream) { }
+    public void Attach([Ownership(OwnershipKind.TRANSFERRED)] Stream stream) { }
 
     public void Enqueue(
         [CallbackLifetime(CallbackLifetimeKind.DEFERRED)] Func<Task> work) { }
@@ -78,6 +78,68 @@ public sealed class Cache
 ```
 
 `ThreadSafetyAttribute` describes whether concurrent calls are safe and what synchronization they require. `ThreadAffinityAttribute` instead describes where code must run. `MayBlockAttribute` describes whether a synchronous operation can block its caller and why.
+
+## Ownership contracts
+
+`OwnershipAttribute` documents who is responsible for ultimately releasing an `IDisposable`. It is valid only on disposable fields, properties, parameters, and return values; the analyzer reports `TTA010` as an error when the annotated type does not implement `IDisposable`.
+
+`OwnershipKind` is required—there is no implicit default:
+
+| Kind | Meaning |
+| --- | --- |
+| `OwnershipKind.TRANSFERRED` | The receiver becomes responsible for disposing or transferring the resource. |
+| `OwnershipKind.UNCHANGED` | The receiver only borrows the resource and must not dispose it. |
+
+`OwnershipFlow` is optional. Its default is inferred from the annotation target:
+
+| Target | Default flow | Use an explicit flow when |
+| --- | --- | --- |
+| Return value | `OUTPUT` | Normally never; a return value only leaves the member. |
+| Ordinary or `in` parameter | `INPUT` | Normally never; the value enters the member. |
+| `out` parameter | `OUTPUT` | Normally never; the value leaves the member. |
+| `ref` parameter | none | Both directions are possible; specify `INPUT` and/or `OUTPUT` explicitly. |
+| Property | `OUTPUT` | The setter and getter use different ownership: `INPUT` applies to `set`, `OUTPUT` applies to `get`. |
+| Field | `DEFAULT` | Do not specify a flow; a field represents stored state rather than an API boundary. |
+
+For example, a factory transfers a new resource to its caller, while a shared resource is returned as borrowed:
+
+```csharp
+public sealed class ResourceFactory
+{
+    [return: Ownership(OwnershipKind.TRANSFERRED)]
+    public Stream Create() => new MemoryStream();
+
+    [return: Ownership(OwnershipKind.UNCHANGED)]
+    public Stream Shared => _shared;
+
+    private readonly Stream _shared = new MemoryStream();
+}
+```
+
+A property can receive an owned resource yet expose only a borrowed reference:
+
+```csharp
+[Ownership(OwnershipKind.TRANSFERRED, OwnershipFlow.INPUT)]
+[Ownership(OwnershipKind.UNCHANGED, OwnershipFlow.OUTPUT)]
+public Stream Current { get; set; }
+```
+
+Fields describe the object's internal responsibility. Mark a field explicitly when its ownership cannot be inferred:
+
+```csharp
+public sealed class Session : IDisposable
+{
+    [Ownership(OwnershipKind.TRANSFERRED)]
+    private readonly Stream _stream;
+
+    public Session([Ownership(OwnershipKind.TRANSFERRED)] Stream stream)
+        => _stream = stream;
+
+    public void Dispose() => _stream.Dispose();
+}
+```
+
+The analyzer also infers field ownership when a constructor assigns an `INPUT` + `TRANSFERRED` parameter to an instance disposable field. An object with owned fields must implement `IDisposable` (`TTA008`) and must release or transfer every owned field from `Dispose` (`TTA009`). A field marked `UNCHANGED` is borrowed, does not make the containing object disposable, and must not be disposed by it (`TTA006`). Static fields are outside an individual instance's lifetime.
 
 ```csharp
 [ThreadAffinity("Must be called from the UI thread.")]

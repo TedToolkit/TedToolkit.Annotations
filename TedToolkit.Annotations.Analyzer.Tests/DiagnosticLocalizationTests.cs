@@ -36,7 +36,7 @@ internal sealed class DiagnosticLocalizationTests
     [Arguments("TTA003", "原所有者使用了已转移的资源")]
     [Arguments("TTA004", "本地拥有的可释放资源未被释放")]
     [Arguments("TTA005", "回调的生命周期可能超过其捕获的资源")]
-    [Arguments("TTA006", "可释放属性是借用资源")]
+    [Arguments("TTA006", "可释放资源是借用资源")]
     [Arguments("TTA007", "返回了已释放的资源")]
     [Arguments("TTA100", "调用了变通 API")]
     [Arguments("TTA101", "调用了临时实现")]

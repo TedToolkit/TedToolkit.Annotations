@@ -9,38 +9,103 @@ using Microsoft.CodeAnalysis;
 
 namespace TedToolkit.Annotations.Analyzer;
 
+/// <summary>
+/// Defines diagnostic descriptors for disposable-resource lifetime analysis.
+/// </summary>
 internal static class DisposableLifetimeDiagnostics
 {
     private const string DOUBLE_DISPOSE_ID = "TTA001";
+
     private const string USE_AFTER_DISPOSE_ID = "TTA002";
+
     private const string USE_AFTER_TRANSFER_ID = "TTA003";
+
     private const string UNDISPOSED_RESOURCE_ID = "TTA004";
+
     private const string CALLBACK_OUTLIVES_RESOURCE_ID = "TTA005";
+
     private const string DISPOSE_BORROWED_PROPERTY_ID = "TTA006";
+
     private const string DISPOSED_RESOURCE_RETURNED_ID = "TTA007";
 
+    private const string OWNED_FIELD_REQUIRES_DISPOSABLE_TYPE_ID = "TTA008";
+
+    private const string OWNED_FIELD_NOT_RELEASED_ID = "TTA009";
+
+    private const string OWNERSHIP_TARGET_MUST_BE_DISPOSABLE_ID = "TTA010";
+
+    /// <summary>
+    /// Reports a resource that is disposed more than once.
+    /// </summary>
     internal static readonly DiagnosticDescriptor DoubleDispose = CreateDiagnostic(DOUBLE_DISPOSE_ID, DiagnosticSeverity.Error);
 
+    /// <summary>
+    /// Reports use of a disposed resource.
+    /// </summary>
     internal static readonly DiagnosticDescriptor UseAfterDispose = CreateDiagnostic(USE_AFTER_DISPOSE_ID, DiagnosticSeverity.Error);
 
+    /// <summary>
+    /// Reports use of a resource after ownership transfer.
+    /// </summary>
     internal static readonly DiagnosticDescriptor UseAfterTransfer = CreateDiagnostic(USE_AFTER_TRANSFER_ID, DiagnosticSeverity.Error);
 
+    /// <summary>
+    /// Reports an owned resource that is not disposed.
+    /// </summary>
     internal static readonly DiagnosticDescriptor UndisposedResource = CreateDiagnostic(UNDISPOSED_RESOURCE_ID, DiagnosticSeverity.Warning);
 
-    internal static readonly DiagnosticDescriptor CallbackOutlivesResource = CreateDiagnostic(CALLBACK_OUTLIVES_RESOURCE_ID, DiagnosticSeverity.Error);
+    /// <summary>
+    /// Reports a callback that can outlive its resource.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor CallbackOutlivesResource = CreateDiagnostic(
+        CALLBACK_OUTLIVES_RESOURCE_ID,
+        DiagnosticSeverity.Error);
 
-    internal static readonly DiagnosticDescriptor DisposeBorrowedProperty = CreateDiagnostic(DISPOSE_BORROWED_PROPERTY_ID, DiagnosticSeverity.Error);
+    /// <summary>
+    /// Reports disposal of a borrowed property.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor DisposeBorrowedProperty = CreateDiagnostic(
+        DISPOSE_BORROWED_PROPERTY_ID,
+        DiagnosticSeverity.Error);
 
-    internal static readonly DiagnosticDescriptor DisposedResourceReturned = CreateDiagnostic(DISPOSED_RESOURCE_RETURNED_ID, DiagnosticSeverity.Error);
+    /// <summary>
+    /// Reports return of a disposed resource.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor DisposedResourceReturned = CreateDiagnostic(
+        DISPOSED_RESOURCE_RETURNED_ID,
+        DiagnosticSeverity.Error);
+
+    /// <summary>
+    /// Reports an owned field whose containing type is not disposable.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor OwnedFieldRequiresDisposableType = CreateDiagnostic(
+        OWNED_FIELD_REQUIRES_DISPOSABLE_TYPE_ID,
+        DiagnosticSeverity.Warning);
+
+    /// <summary>
+    /// Reports an owned field that is not released by its containing type.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor OwnedFieldNotReleased = CreateDiagnostic(
+        OWNED_FIELD_NOT_RELEASED_ID,
+        DiagnosticSeverity.Warning);
+
+    /// <summary>
+    /// Reports ownership annotations applied to a non-disposable type.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor OwnershipTargetMustBeDisposable = CreateDiagnostic(
+        OWNERSHIP_TARGET_MUST_BE_DISPOSABLE_ID,
+        DiagnosticSeverity.Error);
 
     private static DiagnosticDescriptor CreateDiagnostic(
         string id,
-        DiagnosticSeverity defaultSeverity) =>
-        new(
+        DiagnosticSeverity defaultSeverity)
+    {
+        return new(
             id: id,
             title: DiagnosticResources.Get($"{id}Title"),
             messageFormat: DiagnosticResources.Get($"{id}Message"),
             category: "Lifetime",
             defaultSeverity: defaultSeverity,
             isEnabledByDefault: true);
+    }
 }

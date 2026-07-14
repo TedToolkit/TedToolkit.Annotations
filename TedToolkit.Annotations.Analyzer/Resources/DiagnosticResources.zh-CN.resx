@@ -16,10 +16,16 @@
   <data name="TTA005Message" xml:space="preserve"><value>{0} 回调捕获了“{1}”，该资源可能在回调执行前结束生命周期</value></data>
   <data name="CallbackLifetimeDeferred" xml:space="preserve"><value>延迟执行</value></data>
   <data name="CallbackLifetimeSubscription" xml:space="preserve"><value>订阅</value></data>
-  <data name="TTA006Title" xml:space="preserve"><value>可释放属性是借用资源</value></data>
-  <data name="TTA006Message" xml:space="preserve"><value>可释放属性“{0}”是借用资源，调用方不得将其释放</value></data>
+  <data name="TTA006Title" xml:space="preserve"><value>可释放资源是借用资源</value></data>
+  <data name="TTA006Message" xml:space="preserve"><value>可释放资源“{0}”是借用资源，调用方不得将其释放</value></data>
   <data name="TTA007Title" xml:space="preserve"><value>返回了已释放的资源</value></data>
   <data name="TTA007Message" xml:space="preserve"><value>可释放资源“{0}”在释放或计划释放后被返回</value></data>
+  <data name="TTA008Title" xml:space="preserve"><value>拥有可释放字段的类型必须可释放</value></data>
+  <data name="TTA008Message" xml:space="preserve"><value>类型“{0}”拥有可释放字段“{1}”，但未实现 IDisposable</value></data>
+  <data name="TTA009Title" xml:space="preserve"><value>拥有的可释放字段未被释放</value></data>
+  <data name="TTA009Message" xml:space="preserve"><value>拥有的可释放字段“{0}”未在 Dispose 中释放或转移</value></data>
+  <data name="TTA010Title" xml:space="preserve"><value>Ownership 的目标必须可释放</value></data>
+  <data name="TTA010Message" xml:space="preserve"><value>Ownership 只能应用于 IDisposable 类型，但“{0}”未实现 IDisposable</value></data>
   <data name="TTA100Title" xml:space="preserve"><value>调用了变通 API</value></data>
   <data name="TTA101Title" xml:space="preserve"><value>调用了临时实现</value></data>
   <data name="TTA102Title" xml:space="preserve"><value>调用了技术债 API</value></data>
@@ -36,4 +42,6 @@
   <data name="TechnicalDebtKindReliability" xml:space="preserve"><value>可靠性技术债 API</value></data>
   <data name="TechnicalDebtKindUnknown" xml:space="preserve"><value>未知类型的技术债 API</value></data>
   <data name="MaintenanceCleanupRequiredKind" xml:space="preserve"><value>需要清理的 API</value></data>
+  <data name="PreconditionDocumentationTitle" xml:space="preserve"><value>生成前置条件异常文档</value></data>
+  <data name="PreconditionDocumentationMessage" xml:space="preserve"><value>可为前置条件异常生成 XML exception 文档元素。</value></data>
 </root>

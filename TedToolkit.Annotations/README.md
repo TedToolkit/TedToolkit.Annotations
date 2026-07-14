@@ -29,16 +29,63 @@ public sealed class Cache
 
 | Attribute | Use it when |
 | --- | --- |
-| `PreconditionAttribute` | The caller must satisfy a condition before calling a member. |
+| `PreconditionAttribute` | The caller must satisfy a condition before calling a member; it can record the exception type for a failed condition. |
 | `PostconditionAttribute` | A member guarantees a condition after it completes successfully. |
 | `InvariantAttribute` | A condition must remain true throughout a type's lifetime. |
 | `BehaviorCaseAttribute` | A specific input condition has important expected behavior, especially a boundary case. |
 | `AssumptionAttribute` | Code relies on an external fact or convention that it does not verify. |
 | `SideEffectAttribute` | A member causes an observable state change beyond its return value. |
+| `IdempotentAttribute` | Repeating an operation has no additional observable effect. |
+| `ThreadSafetyAttribute` | A type or member has a documented thread-safety guarantee or synchronization requirement. |
+| `TransfersOwnershipAttribute` | The receiving member assumes ownership of an annotated parameter. |
+| `CallbackLifetimeAttribute` | A callback parameter is invoked immediately, retained for deferred invocation, or retained as a subscription. |
+| `MayBlockAttribute` | An operation can block the calling thread; document the condition that causes it. |
+| `ThreadAffinityAttribute` | A type or member requires a particular thread or synchronization context. |
 
-Use XML `<exception>` documentation for exceptions; it is supported directly by C# tooling and is more appropriate than an additional attribute.
+For a parameter-level precondition, optionally record the exception type. The generic form is available to C# 11 or later consumers and guarantees that the supplied type derives from `Exception`.
+
+```csharp
+public void Reserve(
+    [Precondition<ArgumentOutOfRangeException>("Must be greater than zero.")]
+    int quantity)
+{
+}
+```
+
+Use the non-generic form when supporting an earlier C# language version:
+
+```csharp
+[Precondition("Must be greater than zero.", typeof(ArgumentOutOfRangeException))]
+int quantity
+```
 
 `DocumentationAttribute` is the shared abstract base and is not applied directly.
+
+### Document concurrency, retries, and ownership
+
+```csharp
+[ThreadSafety("Concurrent reads are supported; writes require external synchronization.")]
+public sealed class Cache
+{
+    [Idempotent]
+    public void Clear() { }
+
+    public void Attach([TransfersOwnership] Stream stream) { }
+
+    public void Enqueue(
+        [CallbackLifetime(CallbackLifetimeKind.DEFERRED)] Func<Task> work) { }
+}
+```
+
+`ThreadSafetyAttribute` describes whether concurrent calls are safe and what synchronization they require. `ThreadAffinityAttribute` instead describes where code must run. `MayBlockAttribute` describes whether a synchronous operation can block its caller and why.
+
+```csharp
+[ThreadAffinity("Must be called from the UI thread.")]
+public void UpdateView() { }
+
+[MayBlock("Performs synchronous disk I/O.")]
+public void Flush() { }
+```
 
 ### Document parameters and return values
 

@@ -73,11 +73,20 @@ using TedToolkit.Annotations.Documentations;
 public sealed class Inventory
 {
     [return: Postcondition("The result is non-negative.")]
-    public int Reserve([Precondition("quantity is greater than zero.")] int quantity)
+    public int Reserve(
+        [Precondition<ArgumentOutOfRangeException>("Must be greater than zero.")]
+        int quantity)
     {
         return quantity;
     }
 }
+```
+
+`PreconditionAttribute` can optionally record the exception thrown when a condition is not met. Use `PreconditionAttribute<TException>` for a concise, type-safe C# 11+ form, or pass the type explicitly when supporting earlier language versions:
+
+```csharp
+[Precondition("Must be greater than zero.", typeof(ArgumentOutOfRangeException))]
+int quantity
 ```
 
 Use `AssumptionAttribute` for conditions controlled outside a member and `SideEffectAttribute` for observable state changes:
@@ -94,10 +103,42 @@ public sealed class SessionService
 }
 ```
 
+Use `IdempotentAttribute` when safely repeating an operation has no additional observable effect. Use `ThreadSafetyAttribute` to record concurrency guarantees or synchronization requirements. `TransfersOwnershipAttribute` is applied directly to a parameter when the receiving member becomes responsible for its lifetime:
+
+```csharp
+[ThreadSafety("Concurrent reads are supported; writes require external synchronization.")]
+public sealed class Cache
+{
+    [Idempotent]
+    public void Clear() { }
+
+    public void Attach([TransfersOwnership] Stream stream) { }
+
+    public void Enqueue(
+        [CallbackLifetime(CallbackLifetimeKind.DEFERRED)] Func<Task> work) { }
+}
+```
+
 - `InvariantAttribute` documents a condition that must hold for a class, struct, or interface.
 - `PreconditionAttribute` documents a required state or input for a method, constructor, property, or parameter.
 - `PostconditionAttribute` documents the state guaranteed after a method, constructor, property, or return value.
 - `BehaviorCaseAttribute` documents a condition and expected result, optionally noting whether it has a unit test.
+- `IdempotentAttribute` documents that repeating an operation has no additional observable effect.
+- `ThreadSafetyAttribute` documents thread-safety guarantees or synchronization requirements.
+- `TransfersOwnershipAttribute` documents a parameter whose ownership transfers to the receiving member.
+- `CallbackLifetimeAttribute` documents whether a callback parameter is invoked immediately, retained for deferred invocation, or retained as a subscription.
+- `MayBlockAttribute` documents an operation that can block the calling thread and the condition that causes it.
+- `ThreadAffinityAttribute` documents a required thread or synchronization context.
+
+`ThreadSafetyAttribute` answers whether concurrent calls are safe and what synchronization they require. `ThreadAffinityAttribute` answers where code must run. `MayBlockAttribute` answers whether synchronous code can block its caller and why:
+
+```csharp
+[ThreadAffinity("Must be called from the UI thread.")]
+public void UpdateView() { }
+
+[MayBlock("Performs synchronous disk I/O.")]
+public void Flush() { }
+```
 
 ## Supported frameworks
 

@@ -1,14 +1,14 @@
 // -----------------------------------------------------------------------
-// <copyright file="CleanupRequiredAttribute.cs" company="TedToolkit">
+// <copyright file="TransfersOwnershipAttribute.cs" company="TedToolkit">
 // Copyright (c) TedToolkit. All rights reserved.
 // Licensed under the LGPL-3.0 license. See COPYING, COPYING.LESSER file in the project root for full license information.
 // </copyright>
 // -----------------------------------------------------------------------
 
-namespace TedToolkit.Annotations.Maintenances;
+namespace TedToolkit.Annotations.Documentations;
 
 /// <summary>
-/// Marks code that is correct but should be simplified, removed, or reorganized.
+/// Documents that ownership of the annotated parameter transfers to the receiving member.
 /// </summary>
-/// <param name="reason">The cleanup work that is required.</param>
-public class CleanupRequiredAttribute(string reason) : MaintenanceAttribute(reason);
+[AttributeUsage(AttributeTargets.Parameter, Inherited = false)]
+public sealed class TransfersOwnershipAttribute : DocumentationAttribute;

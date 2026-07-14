@@ -5,5 +5,19 @@
   <PropertyGroup>
     <Title>Annotations</Title>
     <Description>Some annotations.</Description>
+    <NoWarn>$(NoWarn);CA1813</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\TedToolkit.Annotations.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Analyzer.dll"
+          Pack="true"
+          PackagePath="analyzers\dotnet\cs"
+          Visible="false" />
+  </ItemGroup>
+
+  <Target Name="BuildAnnotationsAnalyzer" BeforeTargets="GenerateNuspec">
+    <MSBuild Projects="..\TedToolkit.Annotations.Analyzer\TedToolkit.Annotations.Analyzer.csproj"
+             Targets="Build"
+             Properties="Configuration=$(Configuration)" />
+  </Target>
 </Project>

@@ -5,6 +5,8 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Diagnostics;
+
 namespace TedToolkit.Annotations.Documentations;
 
 /// <summary>
@@ -13,15 +15,18 @@ namespace TedToolkit.Annotations.Documentations;
 /// <param name="condition">The condition under which this behavior applies.</param>
 /// <param name="expected">The expected behavior.</param>
 /// <param name="hasUnitTest">Whether a unit test covers this behavior.</param>
+/// <param name="exceptionType">The exception expected when this behavior fails, if any.</param>
 [AttributeUsage(
     AttributeTargets.Constructor
     | AttributeTargets.Method,
     AllowMultiple = true,
     Inherited = false)]
-public sealed class BehaviorCaseAttribute(
+[Conditional("ANNOTATIONS_BEHAVIOR_CASE")]
+public class BehaviorCaseAttribute(
     string condition,
     string expected,
-    bool hasUnitTest = false) : DocumentationAttribute
+    bool hasUnitTest = false,
+    Type? exceptionType = null) : DocumentationAttribute
 {
     /// <summary>
     /// Gets the condition under which this behavior applies.
@@ -37,4 +42,19 @@ public sealed class BehaviorCaseAttribute(
     /// Gets a value indicating whether a unit test covers this behavior.
     /// </summary>
     public bool HasUnitTest { get; } = hasUnitTest;
+
+    /// <summary>
+    /// Gets the exception expected when this behavior fails, if specified.
+    /// </summary>
+    public Type? ExceptionType { get; } = ValidateExceptionType(exceptionType);
+
+    private static Type? ValidateExceptionType(Type? exceptionType)
+    {
+        if (exceptionType is not null && !typeof(Exception).IsAssignableFrom(exceptionType))
+        {
+            throw new ArgumentException("The type must derive from Exception.", nameof(exceptionType));
+        }
+
+        return exceptionType;
+    }
 }

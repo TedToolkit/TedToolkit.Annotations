@@ -11,5 +11,5 @@ namespace TedToolkit.Annotations.Maintenances;
 /// Marks a workaround for an external defect or limitation.
 /// </summary>
 /// <param name="reason">The external defect or limitation being worked around.</param>
-public sealed class WorkaroundAttribute(string reason)
+public class WorkaroundAttribute(string reason)
     : MaintenanceAttribute(reason);

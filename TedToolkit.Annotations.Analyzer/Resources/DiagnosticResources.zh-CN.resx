@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="TTA001Title" xml:space="preserve"><value>可释放资源被重复释放</value></data>
+  <data name="TTA001Message" xml:space="preserve"><value>可释放资源“{0}”被重复释放</value></data>
+  <data name="TTA002Title" xml:space="preserve"><value>使用了已释放的资源</value></data>
+  <data name="TTA002Message" xml:space="preserve"><value>可释放资源“{0}”在释放后仍被使用</value></data>
+  <data name="TTA003Title" xml:space="preserve"><value>原所有者使用了已转移的资源</value></data>
+  <data name="TTA003Message" xml:space="preserve"><value>可释放资源“{0}”的所有权转移后仍被使用</value></data>
+  <data name="TTA004Title" xml:space="preserve"><value>本地拥有的可释放资源未被释放</value></data>
+  <data name="TTA004Message" xml:space="preserve"><value>可释放资源“{0}”既未释放，也未将所有权转移给其他所有者</value></data>
+  <data name="TTA005Title" xml:space="preserve"><value>回调的生命周期可能超过其捕获的资源</value></data>
+  <data name="TTA005Message" xml:space="preserve"><value>{0} 回调捕获了“{1}”，该资源可能在回调执行前结束生命周期</value></data>
+  <data name="CallbackLifetimeDeferred" xml:space="preserve"><value>延迟执行</value></data>
+  <data name="CallbackLifetimeSubscription" xml:space="preserve"><value>订阅</value></data>
+  <data name="TTA006Title" xml:space="preserve"><value>可释放属性是借用资源</value></data>
+  <data name="TTA006Message" xml:space="preserve"><value>可释放属性“{0}”是借用资源，调用方不得将其释放</value></data>
+  <data name="TTA007Title" xml:space="preserve"><value>返回了已释放的资源</value></data>
+  <data name="TTA007Message" xml:space="preserve"><value>可释放资源“{0}”在释放或计划释放后被返回</value></data>
+  <data name="TTA100Title" xml:space="preserve"><value>调用了变通 API</value></data>
+  <data name="TTA101Title" xml:space="preserve"><value>调用了临时实现</value></data>
+  <data name="TTA102Title" xml:space="preserve"><value>调用了技术债 API</value></data>
+  <data name="TTA103Title" xml:space="preserve"><value>调用了需要清理的 API</value></data>
+  <data name="MaintenanceUsageMessage" xml:space="preserve"><value>调用了{0}“{1}”。原因：{2}。{3}</value></data>
+  <data name="MaintenanceNoReasonSpecified" xml:space="preserve"><value>未说明原因</value></data>
+  <data name="MaintenanceNoRemovalCondition" xml:space="preserve"><value>未指定移除条件</value></data>
+  <data name="MaintenanceRemovalCondition" xml:space="preserve"><value>移除条件：{0}</value></data>
+  <data name="MaintenanceWorkaroundKind" xml:space="preserve"><value>变通实现</value></data>
+  <data name="MaintenanceTemporaryImplementationKind" xml:space="preserve"><value>临时实现</value></data>
+  <data name="TechnicalDebtKindDesign" xml:space="preserve"><value>设计类技术债 API</value></data>
+  <data name="TechnicalDebtKindCompatibility" xml:space="preserve"><value>兼容性技术债 API</value></data>
+  <data name="TechnicalDebtKindPerformance" xml:space="preserve"><value>性能技术债 API</value></data>
+  <data name="TechnicalDebtKindReliability" xml:space="preserve"><value>可靠性技术债 API</value></data>
+  <data name="TechnicalDebtKindUnknown" xml:space="preserve"><value>未知类型的技术债 API</value></data>
+  <data name="MaintenanceCleanupRequiredKind" xml:space="preserve"><value>需要清理的 API</value></data>
+</root>

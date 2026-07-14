@@ -50,7 +50,7 @@ To emit maintenance attributes for reflection or analyzer tooling, define `ANNOT
 
 ## Documentation annotations
 
-The documentation annotations record contracts and examples directly on types and members. They live in the `TedToolkit.Annotations.Documentations` namespace and do not validate code or change runtime behavior.
+The documentation annotations record contracts and examples directly on types and members. They live in the `TedToolkit.Annotations.Documentations` namespace and do not validate code or change runtime behavior. `BehaviorCaseAttribute` usage is emitted only when `ANNOTATIONS_BEHAVIOR_CASE` is defined, keeping individual test-like scenarios out of normal assembly metadata.
 
 ```csharp
 using TedToolkit.Annotations.Documentations;
@@ -60,7 +60,7 @@ public sealed class Account
 {
     [Precondition("Amount is greater than zero.")]
     [Postcondition("The balance increases by the supplied amount.")]
-    [BehaviorCase("Amount is 10", "Balance increases by 10", hasUnitTest: true)]
+    [BehaviorCase("Amount is negative", "Throws for an invalid deposit.", exceptionType: typeof(ArgumentOutOfRangeException))]
     public void Deposit(decimal amount) { }
 }
 ```
@@ -73,11 +73,35 @@ using TedToolkit.Annotations.Documentations;
 public sealed class Inventory
 {
     [return: Postcondition("The result is non-negative.")]
-    public int Reserve([Precondition("quantity is greater than zero.")] int quantity)
+    public int Reserve(
+        [Precondition<ArgumentOutOfRangeException>("Must be greater than zero.")]
+        int quantity)
     {
         return quantity;
     }
 }
+```
+
+`PreconditionAttribute` can optionally record the exception thrown when a condition is not met. Use `PreconditionAttribute<TException>` for a concise, type-safe C# 11+ form, or pass the type explicitly when supporting earlier language versions:
+
+```csharp
+[Precondition("Must be greater than zero.", typeof(ArgumentOutOfRangeException))]
+int quantity
+```
+
+`BehaviorCaseAttribute` can likewise record the exception expected for a specific behavior case. Use `BehaviorCaseAttribute<TException>` for a concise, type-safe C# 11+ form, or pass the type explicitly for earlier language versions. Define `ANNOTATIONS_BEHAVIOR_CASE` when reflection or analyzer tooling needs those annotations:
+
+```csharp
+[BehaviorCase<FormatException>("The input is malformed.", "Rejects the request.")]
+
+// C# 10 and earlier:
+[BehaviorCase("The input is malformed.", "Rejects the request.", exceptionType: typeof(FormatException))]
+```
+
+```xml
+<PropertyGroup>
+  <DefineConstants>$(DefineConstants);ANNOTATIONS_BEHAVIOR_CASE</DefineConstants>
+</PropertyGroup>
 ```
 
 Use `AssumptionAttribute` for conditions controlled outside a member and `SideEffectAttribute` for observable state changes:
@@ -94,10 +118,42 @@ public sealed class SessionService
 }
 ```
 
+Use `IdempotentAttribute` when safely repeating an operation has no additional observable effect. Use `ThreadSafetyAttribute` to record concurrency guarantees or synchronization requirements. `TransfersOwnershipAttribute` is applied directly to a parameter when the receiving member becomes responsible for its lifetime:
+
+```csharp
+[ThreadSafety("Concurrent reads are supported; writes require external synchronization.")]
+public sealed class Cache
+{
+    [Idempotent]
+    public void Clear() { }
+
+    public void Attach([TransfersOwnership] Stream stream) { }
+
+    public void Enqueue(
+        [CallbackLifetime(CallbackLifetimeKind.DEFERRED)] Func<Task> work) { }
+}
+```
+
 - `InvariantAttribute` documents a condition that must hold for a class, struct, or interface.
 - `PreconditionAttribute` documents a required state or input for a method, constructor, property, or parameter.
 - `PostconditionAttribute` documents the state guaranteed after a method, constructor, property, or return value.
 - `BehaviorCaseAttribute` documents a condition and expected result, optionally noting whether it has a unit test.
+- `IdempotentAttribute` documents that repeating an operation has no additional observable effect.
+- `ThreadSafetyAttribute` documents thread-safety guarantees or synchronization requirements.
+- `TransfersOwnershipAttribute` documents a parameter whose ownership transfers to the receiving member.
+- `CallbackLifetimeAttribute` documents whether a callback parameter is invoked immediately, retained for deferred invocation, or retained as a subscription.
+- `MayBlockAttribute` documents an operation that can block the calling thread and the condition that causes it.
+- `ThreadAffinityAttribute` documents a required thread or synchronization context.
+
+`ThreadSafetyAttribute` answers whether concurrent calls are safe and what synchronization they require. `ThreadAffinityAttribute` answers where code must run. `MayBlockAttribute` answers whether synchronous code can block its caller and why:
+
+```csharp
+[ThreadAffinity("Must be called from the UI thread.")]
+public void UpdateView() { }
+
+[MayBlock("Performs synchronous disk I/O.")]
+public void Flush() { }
+```
 
 ## Supported frameworks
 

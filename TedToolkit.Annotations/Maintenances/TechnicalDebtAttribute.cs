@@ -12,7 +12,7 @@ namespace TedToolkit.Annotations.Maintenances;
 /// </summary>
 /// <param name="kind">The area affected by the technical debt.</param>
 /// <param name="reason">The trade-off and its maintenance cost.</param>
-public sealed class TechnicalDebtAttribute(TechnicalDebtKind kind, string reason)
+public class TechnicalDebtAttribute(TechnicalDebtKind kind, string reason)
     : MaintenanceAttribute(reason)
 {
     /// <summary>

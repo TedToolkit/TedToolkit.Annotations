@@ -28,6 +28,7 @@ internal sealed class DiagnosticLocalizationTests
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Title.ToString(culture))).Contains("Disposed resource is used");
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Title.ToString(culture))).Contains("Technical-debt API is invoked");
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Title.ToString(culture))).Contains("Const contract is violated");
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Title.ToString(culture))).Contains("Behavior case requires a unit test");
     }
 
     /// <summary>
@@ -47,7 +48,9 @@ internal sealed class DiagnosticLocalizationTests
     [Arguments("TTA101", "调用了临时实现")]
     [Arguments("TTA102", "调用了技术债 API")]
     [Arguments("TTA103", "调用了需要清理的 API")]
+    [Arguments("TTA200", "生成前置条件异常文档")]
     [Arguments("TTA201", "应显式执行装箱转换")]
+    [Arguments("TTA202", "行为用例需要单元测试")]
     [Arguments("TTA300", "违反了 Const 契约")]
     [Arguments("TTA301", "Const 不能标注 out 参数")]
     [Arguments("TTA302", "Explicit.Const 用法无效")]
@@ -63,6 +66,8 @@ internal sealed class DiagnosticLocalizationTests
     private static ImmutableArray<DiagnosticDescriptor> GetAllDiagnostics() =>
         new DisposableLifetimeAnalyzer().SupportedDiagnostics
             .AddRange(new MaintenanceUsageAnalyzer().SupportedDiagnostics)
+            .AddRange(new PreconditionDocumentationAnalyzer().SupportedDiagnostics)
             .AddRange(new BoxingAnalyzer().SupportedDiagnostics)
+            .AddRange(new BehaviorCaseUnitTestAnalyzer().SupportedDiagnostics)
             .AddRange(new ConstMutationAnalyzer().SupportedDiagnostics);
 }

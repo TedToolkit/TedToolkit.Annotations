@@ -21,6 +21,15 @@ namespace TedToolkit.Annotations.Analyzer.Tests.Boxing;
 internal sealed class BoxingCodeFixProviderTests
 {
     /// <summary>
+    /// 验证装箱修复不支持批量操作。
+    /// </summary>
+    [Test]
+    public async Task Should_not_support_fix_all()
+    {
+        await Assert.That(new BoxingCodeFixProvider().GetFixAllProvider()).IsNull();
+    }
+
+    /// <summary>
     /// 验证 object 装箱会修复为不指定目标类型的 Explicit.Box 调用。
     /// </summary>
     [Test]

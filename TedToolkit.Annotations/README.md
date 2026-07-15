@@ -64,7 +64,7 @@ int quantity
 
 `DocumentationAttribute` is the shared abstract base and is not applied directly.
 
-Typed `PreconditionAttribute<TException>` annotations also drive the hidden `TTA200` code fix, which adds missing XML `<exception>` entries to methods and constructors.
+Typed `PreconditionAttribute<TException>` annotations also drive the informational `TTA200` code fix, which adds missing XML `<exception>` entries to methods and constructors.
 
 ### Describe const object-graph depth
 

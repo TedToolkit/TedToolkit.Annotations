@@ -20,6 +20,26 @@ namespace TedToolkit.Annotations.Analyzer.Tests;
 internal sealed class PreconditionDocumentationCodeFixProviderTests
 {
     /// <summary>
+    /// 验证缺少异常文档的前置条件报告信息级提示。
+    /// </summary>
+    [Test]
+    public async Task Should_report_info_diagnostic_when_exception_documentation_can_be_generated()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Sample
+            {
+                void Execute([Precondition<ArgumentNullException>("Must not be null.")] string value) { }
+            }
+            """);
+
+        var diagnostic = diagnostics.Single(candidate => candidate.Id == PreconditionDocumentationAnalyzer.DIAGNOSTIC_ID);
+        await Assert.That(diagnostic.Severity).IsEqualTo(DiagnosticSeverity.Info);
+    }
+
+    /// <summary>
     /// 验证修复会为相同异常类型的参数前置条件分别生成异常文档。
     /// </summary>
     [Test]

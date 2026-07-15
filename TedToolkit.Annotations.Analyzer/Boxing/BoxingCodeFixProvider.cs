@@ -7,6 +7,7 @@
 
 using System.Collections.Immutable;
 using System.Composition;
+using System.Globalization;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
@@ -34,9 +35,9 @@ public sealed class BoxingCodeFixProvider : CodeFixProvider
     }
 
     /// <inheritdoc />
-    public override FixAllProvider GetFixAllProvider()
+    public override FixAllProvider? GetFixAllProvider()
     {
-        return WellKnownFixAllProviders.BatchFixer;
+        return null;
     }
 
     /// <inheritdoc />
@@ -54,7 +55,7 @@ public sealed class BoxingCodeFixProvider : CodeFixProvider
 
         context.RegisterCodeFix(
             CodeAction.Create(
-                "Make boxing explicit with Explicit.Box",
+                DiagnosticResources.Get("TTA201CodeFixTitle").ToString(CultureInfo.CurrentCulture),
                 cancellationToken => ApplyAsync(context.Document, conversion, cancellationToken),
                 equivalenceKey: nameof(BoxingCodeFixProvider)),
             context.Diagnostics);

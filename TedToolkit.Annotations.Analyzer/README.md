@@ -48,12 +48,13 @@ Unannotated boundaries follow target-specific ownership defaults rather than one
 
 These rules require the maintenance attributes to be present in the analyzed compilation. Define `ANNOTATIONS_MAINTENANCE` when call-site diagnostics are required.
 
-### Documentation and boxing
+### Documentation, behavior, and boxing
 
 | ID | Severity | Meaning |
 | --- | --- | --- |
-| `TTA200` | Hidden | XML `<exception>` documentation can be generated from a typed precondition. |
+| `TTA200` | Info | XML `<exception>` documentation can be generated from a typed precondition. |
 | `TTA201` | Info | A boxing conversion should be written with `Explicit.Box`. |
+| `TTA202` | Info | A `BehaviorCaseAttribute` annotation is not covered by a unit test. |
 
 The `TTA200` code fix adds missing exception entries without duplicating existing XML documentation. The `TTA201` code fix preserves the target reference type, including interface targets and nullable boxing semantics.
 

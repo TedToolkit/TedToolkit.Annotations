@@ -62,6 +62,10 @@
   <data name="TTA305Message" xml:space="preserve"><value>调用外部方法“{0}”可能违反“{1}”上的 Const 契约；无法验证外部契约</value></data>
   <data name="TTA201Title" xml:space="preserve"><value>应显式执行装箱转换</value></data>
   <data name="TTA201Message" xml:space="preserve"><value>从“{0}”到“{1}”的装箱转换应使用 Explicit.Box</value></data>
+  <data name="TTA201CodeFixTitle" xml:space="preserve"><value>使用 Explicit.Box 显式装箱</value></data>
   <data name="PreconditionDocumentationTitle" xml:space="preserve"><value>生成前置条件异常文档</value></data>
   <data name="PreconditionDocumentationMessage" xml:space="preserve"><value>可为前置条件异常生成 XML exception 文档元素。</value></data>
+  <data name="TTA202Title" xml:space="preserve"><value>行为用例需要单元测试</value></data>
+  <data name="TTA202Message" xml:space="preserve"><value>此行为用例尚未由单元测试覆盖。</value></data>
+  <data name="TTA202CodeFixTitle" xml:space="preserve"><value>将行为用例标记为已由单元测试覆盖</value></data>
 </root>

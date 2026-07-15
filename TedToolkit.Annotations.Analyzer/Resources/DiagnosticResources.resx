@@ -62,6 +62,10 @@
   <data name="TTA305Message" xml:space="preserve"><value>Calling external method '{0}' can violate the const contract on '{1}'; the external contract cannot be verified</value></data>
   <data name="TTA201Title" xml:space="preserve"><value>Boxing conversion should be explicit</value></data>
   <data name="TTA201Message" xml:space="preserve"><value>Boxing conversion from '{0}' to '{1}' should use Explicit.Box</value></data>
+  <data name="TTA201CodeFixTitle" xml:space="preserve"><value>Make boxing explicit with Explicit.Box</value></data>
   <data name="PreconditionDocumentationTitle" xml:space="preserve"><value>Generate precondition exception documentation</value></data>
   <data name="PreconditionDocumentationMessage" xml:space="preserve"><value>Precondition exceptions can be documented with XML exception elements.</value></data>
+  <data name="TTA202Title" xml:space="preserve"><value>Behavior case requires a unit test</value></data>
+  <data name="TTA202Message" xml:space="preserve"><value>This behavior case is not covered by a unit test.</value></data>
+  <data name="TTA202CodeFixTitle" xml:space="preserve"><value>Mark behavior case as covered by a unit test</value></data>
 </root>

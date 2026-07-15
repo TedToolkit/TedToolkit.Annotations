@@ -48,6 +48,29 @@ internal sealed class DisposableLifetimeAnalyzerTests
     }
 
     /// <summary>
+    /// 验证未在项目中显式启用时不执行 Ownership 检查。
+    /// </summary>
+    [Test]
+    public async Task Should_not_run_ownership_analysis_by_default()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Sample
+            {
+                void Execute() { var resource = new Resource(); }
+            }
+            """, enableOwnershipAnalysis: false);
+
+        await Assert.That(diagnostics).IsEmpty();
+    }
+
+    /// <summary>
     /// 验证 Ownership 不能标记在非 IDisposable 的字段、属性、参数或返回值上。
     /// </summary>
     [Test]
@@ -103,6 +126,96 @@ internal sealed class DisposableLifetimeAnalyzerTests
             """);
 
         await Assert.That(diagnostics).IsEmpty();
+    }
+
+    /// <summary>
+    /// 验证 Ownership 可以标记在递归承载 IDisposable 元素的 Dictionary 字段上。
+    /// </summary>
+    [Test]
+    public async Task Should_not_report_ownership_when_dictionary_structurally_carries_disposable_resources()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using System.Collections.Generic;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Sample : IDisposable
+            {
+                [Ownership(OwnershipKind.TRANSFERRED)]
+                private readonly Dictionary<Guid, ICollection<Resource>> _resources = new();
+
+                public void Dispose()
+                {
+                    foreach (var collection in _resources.Values)
+                    {
+                        foreach (var resource in collection)
+                        {
+                            resource.Dispose();
+                        }
+                    }
+
+                    _resources.Clear();
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics).IsEmpty();
+    }
+
+    /// <summary>
+    /// 验证拥有 IDisposable 元素的 Dictionary 仅清空而未释放元素时会报告未释放资源。
+    /// </summary>
+    [Test]
+    public async Task Should_report_owned_dictionary_when_dispose_does_not_release_contained_resources()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using System.Collections.Generic;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Sample : IDisposable
+            {
+                [Ownership(OwnershipKind.TRANSFERRED)]
+                private readonly Dictionary<Guid, ICollection<Resource>> _resources = new();
+
+                public void Dispose() => _resources.Clear();
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA009"]);
+    }
+
+    /// <summary>
+    /// 验证 Ownership 不能标记在既不可释放也不承载可释放资源的 Dictionary 字段上。
+    /// </summary>
+    [Test]
+    public async Task Should_report_ownership_when_dictionary_does_not_carry_disposable_resources()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using System.Collections.Generic;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Token { }
+
+            sealed class Sample
+            {
+                [Ownership(OwnershipKind.TRANSFERRED)]
+                private readonly Dictionary<Guid, ICollection<Token>> _tokens = new();
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA010"]);
     }
 
     /// <summary>
@@ -1633,7 +1746,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA004"]);
     }
 
-    private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source)
+    private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source, bool enableOwnershipAnalysis = true)
     {
         var compilation = CSharpCompilation.Create(
             assemblyName: "AnalyzerTests",
@@ -1648,7 +1761,8 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
         var analyzer = new DisposableLifetimeAnalyzer();
         var compilationWithAnalyzers = compilation.WithAnalyzers(
-            ImmutableArray.Create<DiagnosticAnalyzer>(analyzer));
+            ImmutableArray.Create<DiagnosticAnalyzer>(analyzer),
+            LifetimeAnalyzerTestHelper.CreateAnalyzerOptions(enableOwnershipAnalysis));
 
         return await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync();
     }

@@ -89,7 +89,9 @@ internal static class OwnedMemberLifetimeAnalysis
 
             foreach (var field in type.GetMembers().OfType<IFieldSymbol>())
             {
-                if (field.IsStatic || !contract.IsDisposable(field.Type))
+                if (field.IsStatic
+                    || (!contract.IsDisposable(field.Type)
+                        && !OwnershipResourceShape.CanCarryDisposableResource(field.Type, contract)))
                 {
                     continue;
                 }
@@ -261,6 +263,16 @@ internal static class OwnedMemberLifetimeAnalysis
 
         private bool HasRequiredDisposalContract(ITypeSymbol memberType)
         {
+            if (!OwnershipResourceShape.CanCarryDisposableResource(memberType, _contract))
+            {
+                return false;
+            }
+
+            if (!_contract.IsDisposable(memberType))
+            {
+                return _releaseMethods.Count > 0;
+            }
+
             var memberIsSync = _contract.IsSynchronouslyDisposable(memberType);
             var memberIsAsync = _contract.IsAsynchronouslyDisposable(memberType);
             var ownerIsSync = _contract.IsSynchronouslyDisposable(_type);
@@ -393,12 +405,16 @@ internal static class OwnedMemberLifetimeAnalysis
     /// </summary>
     /// <param name="candidateFields">Disposable fields eligible for ownership.</param>
     /// <param name="candidateProperties">Disposable properties eligible for ownership.</param>
+    /// <param name="ownerType">The type whose members are being analyzed.</param>
     /// <param name="contract">The known disposal contracts.</param>
     private sealed class ReleasedMemberCollector(
         HashSet<IFieldSymbol> candidateFields,
         HashSet<IPropertySymbol> candidateProperties,
+        INamedTypeSymbol ownerType,
         DisposableContract contract) : OperationWalker
     {
+        private readonly Dictionary<ILocalSymbol, IFieldSymbol> _containerAliases = new(SymbolEqualityComparer.Default);
+
         internal HashSet<IFieldSymbol> ReleasedFields { get; } = new(SymbolEqualityComparer.Default);
 
         internal HashSet<IPropertySymbol> ReleasedProperties { get; } = new(SymbolEqualityComparer.Default);
@@ -423,21 +439,92 @@ internal static class OwnedMemberLifetimeAnalysis
             AddIfCandidate(value);
         }
 
+        public override void VisitForEachLoop(IForEachLoopOperation operation)
+        {
+            var source = ResolveContainerField(operation.Collection);
+            if (source is not null)
+            {
+                foreach (var local in GetIterationLocals(operation))
+                {
+                    _containerAliases[local] = source;
+                }
+            }
+
+            base.VisitForEachLoop(operation);
+
+            foreach (var local in GetIterationLocals(operation))
+            {
+                _containerAliases.Remove(local);
+            }
+        }
+
         private void AddIfCandidate(IOperation? value)
         {
-            var field = LifetimeOwnershipSemantics.GetReferencedField(value);
-            if (field is not null && candidateFields.Contains(field))
+            var field = ResolveContainerField(value);
+            if (field is not null)
             {
                 ReleasedFields.Add(field);
             }
 
-            var property = LifetimeOwnershipSemantics.GetReferencedProperty(value);
-            if (property is null || !candidateProperties.Contains(property))
+            if (!TryGetCurrentInstanceMember(value, ownerType, out var member)
+                || member is not IPropertySymbol property
+                || !candidateProperties.Contains(property))
             {
                 return;
             }
 
             ReleasedProperties.Add(property);
+        }
+
+        private IFieldSymbol? ResolveContainerField(IOperation? value)
+        {
+            if (TryGetCurrentInstanceMember(value, ownerType, out var member)
+                && member is IFieldSymbol field
+                && candidateFields.Contains(field)
+                && !contract.IsDisposable(field.Type))
+            {
+                return field;
+            }
+
+            if (LifetimeOwnershipSemantics.GetReferencedLocal(value) is { } referencedLocal
+                && _containerAliases.TryGetValue(referencedLocal, out var alias))
+            {
+                return alias;
+            }
+
+            return value switch
+            {
+                IPropertyReferenceOperation property => ResolveContainerField(property.Instance),
+                IInvocationOperation invocation => ResolveContainerField(invocation.Instance),
+                IConversionOperation conversion => ResolveContainerField(conversion.Operand),
+                IConditionalAccessInstanceOperation conditionalAccess => ResolveContainerField(
+                    LifetimeOwnershipSemantics.GetConditionalAccessReceiver(conditionalAccess)),
+                _ => null,
+            };
+        }
+
+        private static IEnumerable<ILocalSymbol> GetIterationLocals(IForEachLoopOperation operation)
+        {
+            foreach (var iterationLocal in operation.Locals)
+            {
+                yield return iterationLocal;
+            }
+
+            var loopControlLocal = GetIterationLocal(operation.LoopControlVariable);
+            if (loopControlLocal is null
+                || operation.Locals.Contains(loopControlLocal, SymbolEqualityComparer.Default))
+            {
+                yield break;
+            }
+
+            yield return loopControlLocal;
+        }
+
+        private static ILocalSymbol? GetIterationLocal(IOperation operation)
+        {
+            return operation is IVariableDeclaratorOperation { Symbol: ILocalSymbol local, }
+                ? local
+                : LifetimeOwnershipSemantics.GetReferencedLocal(operation);
         }
     }
 
@@ -532,6 +619,13 @@ internal static class OwnedMemberLifetimeAnalysis
 
             result.ReleasedFields.UnionWith(conditionalCollector.ReleasedFields);
             result.ReleasedProperties.UnionWith(conditionalCollector.ReleasedProperties);
+            var containerCollector = new ReleasedMemberCollector(candidateFields, candidateProperties, ownerType, contract);
+            foreach (var operation in operationBlocks)
+            {
+                containerCollector.Visit(operation);
+            }
+
+            result.ReleasedFields.UnionWith(containerCollector.ReleasedFields);
             result.DoubleReleases.AddRange(doubleReleases);
             return result;
         }
@@ -648,6 +742,37 @@ internal static class OwnedMemberLifetimeAnalysis
                 SetAlias(operation.Symbol, operation.Initializer?.Value);
             }
 
+            public override void VisitForEachLoop(IForEachLoopOperation operation)
+            {
+                var previousAliases = new Dictionary<ILocalSymbol, ISymbol?>(SymbolEqualityComparer.Default);
+                foreach (var local in operation.Locals)
+                {
+                    previousAliases[local] = released.MemberAliases.TryGetValue(local, out var alias) ? alias : null;
+                }
+
+                if (ResolveContainerMember(operation.Collection) is { } member)
+                {
+                    foreach (var local in operation.Locals)
+                    {
+                        released.MemberAliases[local] = member;
+                    }
+                }
+
+                base.VisitForEachLoop(operation);
+
+                foreach (var pair in previousAliases)
+                {
+                    if (pair.Value is null)
+                    {
+                        released.MemberAliases.Remove(pair.Key);
+                    }
+                    else
+                    {
+                        released.MemberAliases[pair.Key] = pair.Value;
+                    }
+                }
+            }
+
             public override void VisitInvocation(IInvocationOperation operation)
             {
                 base.VisitInvocation(operation);
@@ -720,6 +845,24 @@ internal static class OwnedMemberLifetimeAnalysis
                     && released.MemberAliases.TryGetValue(local, out var alias)
                         ? alias
                         : null;
+            }
+
+            private ISymbol? ResolveContainerMember(IOperation? value)
+            {
+                if (ResolveMember(value) is IFieldSymbol field && candidateFields.Contains(field))
+                {
+                    return field;
+                }
+
+                return value switch
+                {
+                    IPropertyReferenceOperation property => ResolveContainerMember(property.Instance),
+                    IInvocationOperation invocation => ResolveContainerMember(invocation.Instance),
+                    IConversionOperation conversion => ResolveContainerMember(conversion.Operand),
+                    IConditionalAccessInstanceOperation conditionalAccess => ResolveContainerMember(
+                        LifetimeOwnershipSemantics.GetConditionalAccessReceiver(conditionalAccess)),
+                    _ => null,
+                };
             }
 
             private void AddDoubleReleaseIfNeeded(ISymbol member, bool alreadyReleased, Location location)

@@ -21,6 +21,14 @@ internal static class ConstAnalyzerTestHelper
         string source,
         params MetadataReference[] additionalReferences)
     {
+        return await AnalyzeAsync(source, enableConstAnalysis: true, additionalReferences: additionalReferences);
+    }
+
+    internal static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(
+        string source,
+        bool enableConstAnalysis,
+        params MetadataReference[] additionalReferences)
+    {
         var compilation = CreateCompilation(source, additionalReferences);
         var compilerDiagnostics = compilation.GetDiagnostics()
             .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
@@ -28,8 +36,20 @@ internal static class ConstAnalyzerTestHelper
         await Assert.That(compilerDiagnostics).IsEmpty();
 
         return await compilation
-            .WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(new ConstMutationAnalyzer()))
+            .WithAnalyzers(
+                ImmutableArray.Create<DiagnosticAnalyzer>(new ConstMutationAnalyzer()),
+                CreateAnalyzerOptions(enableConstAnalysis))
             .GetAnalyzerDiagnosticsAsync();
+    }
+
+    internal static AnalyzerOptions CreateAnalyzerOptions(bool enableConstAnalysis)
+    {
+        var options = enableConstAnalysis
+            ? ImmutableDictionary<string, string>.Empty.Add(
+                AnalysisOptions.ENABLE_CONST_ANALYSIS_PROPERTY_NAME,
+                bool.TrueString)
+            : ImmutableDictionary<string, string>.Empty;
+        return new AnalyzerOptions([], new TestAnalyzerConfigOptionsProvider(options));
     }
 
     internal static MetadataReference CompileReference(string source)
@@ -53,7 +73,7 @@ internal static class ConstAnalyzerTestHelper
             "ConstAnalyzerTests",
             [CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Preview))],
             GetMetadataReferences().AddRange(additionalReferences),
-            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithAllowUnsafe(true));
     }
 
     private static ImmutableArray<MetadataReference> GetMetadataReferences()
@@ -64,5 +84,22 @@ internal static class ConstAnalyzerTestHelper
             .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path))
             .Append(MetadataReference.CreateFromFile(typeof(ConstAttribute).Assembly.Location))
             .ToImmutableArray();
+    }
+
+    private sealed class TestAnalyzerConfigOptionsProvider(ImmutableDictionary<string, string> globalOptions)
+        : AnalyzerConfigOptionsProvider
+    {
+        public override AnalyzerConfigOptions GlobalOptions { get; } = new TestAnalyzerConfigOptions(globalOptions);
+
+        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree) => Empty;
+
+        public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => Empty;
+
+        private static AnalyzerConfigOptions Empty { get; } = new TestAnalyzerConfigOptions([]);
+    }
+
+    private sealed class TestAnalyzerConfigOptions(ImmutableDictionary<string, string> options) : AnalyzerConfigOptions
+    {
+        public override bool TryGetValue(string key, out string value) => options.TryGetValue(key, out value!);
     }
 }

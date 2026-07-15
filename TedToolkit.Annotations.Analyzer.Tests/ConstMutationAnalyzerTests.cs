@@ -11,12 +11,32 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 
+using TedToolkit.Annotations.Analyzer.Tests.Const;
 using TedToolkit.Annotations.Documentations;
 
 namespace TedToolkit.Annotations.Analyzer.Tests;
 
 internal sealed class ConstMutationAnalyzerTests
 {
+    /// <summary>
+    /// 验证未在项目中显式启用时不执行 Const 检查。
+    /// </summary>
+    [Test]
+    public async Task Should_not_run_const_analysis_by_default()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Sample
+            {
+                [Const]
+                void Mutate([Const] object value) => value = new object();
+            }
+            """, enableConstAnalysis: false);
+
+        await Assert.That(diagnostics).IsEmpty();
+    }
+
     /// <summary>
     /// 验证分析器会报告参数和实例成员受保护深度上的写入。
     /// </summary>
@@ -606,31 +626,192 @@ internal sealed class ConstMutationAnalyzerTests
     }
 
     /// <summary>
-    /// 验证 Const 特性不能应用于没有实例接收者的静态方法和静态属性。
+    /// 验证 Const 特性可应用于静态属性的 Current-or-throw 模式。
     /// </summary>
     [Test]
-    public async Task Should_report_const_contracts_on_static_members()
+    public async Task Should_allow_const_contract_on_static_current_or_error_property()
     {
         var diagnostics = await AnalyzeAsync("""
             using TedToolkit.Annotations.Documentations;
 
+            using System;
+
+            sealed class ObjectPartScope
+            {
+                public static ObjectPartScope? Current { get; set; }
+
+                [Const(ConstDepth.DEPTH1_OR_GREATER)]
+                internal static ObjectPartScope CurrentOrError
+                {
+                    get
+                    {
+                        return Current ?? throw new InvalidOperationException(
+                            "请在计算前先创建一个ObjectPartScope！");
+                    }
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics).IsEmpty();
+    }
+
+    /// <summary>
+    /// 验证静态方法和静态属性会以其声明类型的静态状态作为 Const 深度根节点。
+    /// </summary>
+    [Test]
+    public async Task Should_report_mutations_of_static_state_at_protected_depths()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Node
+            {
+                public int Value { get; set; }
+            }
+
             static class Sample
             {
-                [Const]
-                public static void Inspect()
+                private static int _value;
+                private static Node _node = new();
+
+                [Const(ConstDepth.DEPTH1_OR_GREATER)]
+                internal static void Update()
                 {
+                    _value = 1;
+                    _node.Value = 1;
                 }
 
-                [Const]
-                public static int Value { get; set; }
+                [Const(ConstDepth.DEPTH1_OR_GREATER)]
+                internal static int Value
+                {
+                    get
+                    {
+                        _value = 2;
+                        _node.Value = 2;
+                        return _value;
+                    }
+                }
             }
             """);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
-            ConstMutationAnalyzer.STATIC_MEMBER_DIAGNOSTIC_ID,
-            ConstMutationAnalyzer.STATIC_MEMBER_DIAGNOSTIC_ID,
+            ConstMutationAnalyzer.DIAGNOSTIC_ID,
+            ConstMutationAnalyzer.DIAGNOSTIC_ID,
         ]);
+        await Assert.That(diagnostics.All(diagnostic => diagnostic.GetMessage().Contains("depth 1", StringComparison.Ordinal))).IsTrue();
+    }
+
+    /// <summary>
+    /// 验证深度零会保护静态类型根节点上的字段、属性和事件。
+    /// </summary>
+    [Test]
+    public async Task Should_report_direct_static_state_mutations_when_depth_zero_is_protected()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            static class Sample
+            {
+                private static int _field;
+
+                private static event EventHandler? Changed;
+
+                private static int Value { get; set; }
+
+                [Const(ConstDepth.DEPTH0)]
+                internal static void Update()
+                {
+                    _field = 1;
+                    Value = 1;
+                    Changed += OnChanged;
+                }
+
+                private static void OnChanged(object? sender, EventArgs arguments)
+                {
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
+        [
+            ConstMutationAnalyzer.DIAGNOSTIC_ID,
+            ConstMutationAnalyzer.DIAGNOSTIC_ID,
+            ConstMutationAnalyzer.DIAGNOSTIC_ID,
+        ]);
+        await Assert.That(diagnostics.All(diagnostic => diagnostic.GetMessage().Contains("depth 0", StringComparison.Ordinal))).IsTrue();
+    }
+
+    /// <summary>
+    /// 验证静态属性访问器继承 getter 和 setter 的默认 Const 深度。
+    /// </summary>
+    [Test]
+    public async Task Should_apply_default_const_contracts_to_static_property_accessors()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            sealed class Node
+            {
+                public int Value { get; set; }
+            }
+
+            static class Sample
+            {
+                private static int _value;
+                private static Node _node = new();
+
+                internal static int Value
+                {
+                    get
+                    {
+                        _value = 1;
+                        _node.Value = 1;
+                        return _value;
+                    }
+                    set
+                    {
+                        _value = value;
+                        _node.Value = value;
+                    }
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
+        [
+            ConstMutationAnalyzer.DIAGNOSTIC_ID,
+            ConstMutationAnalyzer.DIAGNOSTIC_ID,
+            ConstMutationAnalyzer.DIAGNOSTIC_ID,
+        ]);
+        await Assert.That(diagnostics.Count(diagnostic => diagnostic.GetMessage().Contains("depth 0", StringComparison.Ordinal))).IsEqualTo(1);
+        await Assert.That(diagnostics.Count(diagnostic => diagnostic.GetMessage().Contains("depth 1", StringComparison.Ordinal))).IsEqualTo(2);
+    }
+
+    /// <summary>
+    /// 验证静态 Const 契约不会覆盖其他声明类型的静态状态。
+    /// </summary>
+    [Test]
+    public async Task Should_not_report_mutations_of_static_state_owned_by_another_type()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using TedToolkit.Annotations.Documentations;
+
+            static class Other
+            {
+                internal static int Value { get; set; }
+            }
+
+            static class Sample
+            {
+                [Const]
+                internal static void Update()
+                {
+                    Other.Value = 1;
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics).IsEmpty();
     }
 
     /// <summary>
@@ -717,7 +898,7 @@ internal sealed class ConstMutationAnalyzerTests
         ]);
     }
 
-    private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source)
+    private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source, bool enableConstAnalysis = true)
     {
         var compilation = CSharpCompilation.Create(
             assemblyName: "AnalyzerTests",
@@ -734,7 +915,8 @@ internal sealed class ConstMutationAnalyzerTests
         await Assert.That(compilerDiagnostics).IsEmpty();
 
         var compilationWithAnalyzers = compilation.WithAnalyzers(
-            ImmutableArray.Create<DiagnosticAnalyzer>(new ConstMutationAnalyzer()));
+            ImmutableArray.Create<DiagnosticAnalyzer>(new ConstMutationAnalyzer()),
+            ConstAnalyzerTestHelper.CreateAnalyzerOptions(enableConstAnalysis));
         return await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync();
     }
 

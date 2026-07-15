@@ -12,6 +12,29 @@ namespace TedToolkit.Annotations.Analyzer.Tests.Const;
 internal sealed class ConstInvocationContractTests
 {
     /// <summary>
+    /// 验证带 Const 特性的只读 in 参数可以使用 default 作为可选参数默认值。
+    /// </summary>
+    [Test]
+    public async Task Should_allow_default_value_for_const_in_parameter()
+    {
+        var diagnostics = await ConstAnalyzerTestHelper.AnalyzeAsync("""
+            using TedToolkit.Annotations.Documentations;
+
+            static class Sample
+            {
+                public static ref readonly TResult Add<TOther, TResult>(
+                    [Const] scoped in TOther other,
+                    [Const] in TResult result = default)
+                {
+                    return ref result;
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics).IsEmpty();
+    }
+
+    /// <summary>
     /// 验证 Const 接收者和参数调用无契约源码方法时会报告错误。
     /// </summary>
     [Test]

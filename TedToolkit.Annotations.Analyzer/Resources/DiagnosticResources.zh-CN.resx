@@ -24,8 +24,8 @@
   <data name="TTA008Message" xml:space="preserve"><value>类型“{0}”拥有可释放成员“{1}”，但未实现所需的释放契约</value></data>
   <data name="TTA009Title" xml:space="preserve"><value>拥有的可释放成员未被释放</value></data>
   <data name="TTA009Message" xml:space="preserve"><value>拥有的可释放成员“{0}”未在包含类型的释放方法中释放或转移</value></data>
-  <data name="TTA010Title" xml:space="preserve"><value>Ownership 的目标必须可释放</value></data>
-  <data name="TTA010Message" xml:space="preserve"><value>Ownership 只能应用于 IDisposable 或 IAsyncDisposable 类型，但“{0}”未实现任一契约</value></data>
+  <data name="TTA010Title" xml:space="preserve"><value>Ownership 的目标必须承载可释放资源</value></data>
+  <data name="TTA010Message" xml:space="preserve"><value>Ownership 只能应用于可释放类型或结构上承载可释放资源的类型，但“{0}”两者均不满足</value></data>
   <data name="TTA011Title" xml:space="preserve"><value>拥有的可释放资源被覆盖</value></data>
   <data name="TTA011Message" xml:space="preserve"><value>拥有的可释放资源“{0}”被覆盖前必须先释放或转移所有权</value></data>
   <data name="TTA012Title" xml:space="preserve"><value>拥有的可释放属性被覆盖</value></data>
@@ -56,8 +56,6 @@
   <data name="TTA301Message" xml:space="preserve"><value>Const 契约不能应用于 out 参数“{0}”</value></data>
   <data name="TTA302Title" xml:space="preserve"><value>Explicit.Const 用法无效</value></data>
   <data name="TTA302Message" xml:space="preserve"><value>Explicit.Const 必须直接初始化局部变量，并使用编译期常量深度掩码</value></data>
-  <data name="TTA303Title" xml:space="preserve"><value>Const 不能标注静态成员</value></data>
-  <data name="TTA303Message" xml:space="preserve"><value>Const 契约不能应用于静态成员“{0}”，因为静态成员没有实例接收者</value></data>
   <data name="TTA304Title" xml:space="preserve"><value>源码方法需要兼容的 Const 契约</value></data>
   <data name="TTA304Message" xml:space="preserve"><value>调用源码方法“{0}”可能违反“{1}”上的 Const 契约；请添加兼容的 Const 契约</value></data>
   <data name="TTA305Title" xml:space="preserve"><value>外部方法没有兼容的 Const 契约</value></data>

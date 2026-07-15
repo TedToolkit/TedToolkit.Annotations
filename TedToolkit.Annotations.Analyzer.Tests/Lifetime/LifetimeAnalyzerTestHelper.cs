@@ -31,8 +31,18 @@ internal static class LifetimeAnalyzerTestHelper
         await Assert.That(compilerDiagnostics).IsEmpty();
 
         return await compilation
-            .WithAnalyzers([new DisposableLifetimeAnalyzer()])
+            .WithAnalyzers([new DisposableLifetimeAnalyzer()], CreateAnalyzerOptions(enableOwnershipAnalysis: true))
             .GetAnalyzerDiagnosticsAsync();
+    }
+
+    internal static AnalyzerOptions CreateAnalyzerOptions(bool enableOwnershipAnalysis)
+    {
+        var options = enableOwnershipAnalysis
+            ? ImmutableDictionary<string, string>.Empty.Add(
+                AnalysisOptions.ENABLE_OWNERSHIP_ANALYSIS_PROPERTY_NAME,
+                bool.TrueString)
+            : ImmutableDictionary<string, string>.Empty;
+        return new AnalyzerOptions([], new TestAnalyzerConfigOptionsProvider(options));
     }
 
     private static ImmutableArray<MetadataReference> GetMetadataReferences()
@@ -44,5 +54,22 @@ internal static class LifetimeAnalyzerTestHelper
             .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path))
             .Append(MetadataReference.CreateFromFile(typeof(DocumentationAttribute).Assembly.Location))
             .ToImmutableArray();
+    }
+
+    private sealed class TestAnalyzerConfigOptionsProvider(ImmutableDictionary<string, string> globalOptions)
+        : AnalyzerConfigOptionsProvider
+    {
+        public override AnalyzerConfigOptions GlobalOptions { get; } = new TestAnalyzerConfigOptions(globalOptions);
+
+        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree) => Empty;
+
+        public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => Empty;
+
+        private static AnalyzerConfigOptions Empty { get; } = new TestAnalyzerConfigOptions([]);
+    }
+
+    private sealed class TestAnalyzerConfigOptions(ImmutableDictionary<string, string> options) : AnalyzerConfigOptions
+    {
+        public override bool TryGetValue(string key, out string value) => options.TryGetValue(key, out value!);
     }
 }

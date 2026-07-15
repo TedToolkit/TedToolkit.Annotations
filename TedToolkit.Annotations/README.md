@@ -70,13 +70,21 @@ Typed `PreconditionAttribute<TException>` annotations also drive the hidden `TTA
 
 `ConstAttribute` describes the object-graph depths that code must not mutate. Its `ConstDepth` mask has one `uint` bit per depth and defaults to `ConstDepth.ALL`, protecting all 32 depths.
 
-On a parameter, `DEPTH0` prevents reassignment of the parameter itself; `DEPTH1` protects its direct fields and properties; `DEPTH2` protects members of those members; and so on. On an instance method, `DEPTH0` protects direct fields and properties of `this`, `DEPTH1` protects their members, and so on. Use `DEPTHn_OR_GREATER` when a depth and every deeper depth must be protected.
+Const checks are opt-in. Add the following to the consuming project's `.csproj` before relying on const diagnostics:
+
+```xml
+<PropertyGroup>
+  <TedToolkitEnableConstAnalysis>true</TedToolkitEnableConstAnalysis>
+</PropertyGroup>
+```
+
+On a parameter, `DEPTH0` prevents reassignment of the parameter itself; `DEPTH1` protects its direct fields and properties; `DEPTH2` protects members of those members; and so on. On an instance method, `DEPTH0` protects direct fields and properties of `this`, `DEPTH1` protects their members, and so on. On a static method or property, the declaring type's static state is the root: `DEPTH0` protects its direct static fields and properties, and `DEPTH1` protects their members. Applying `Const` to a type supplies this contract as a default for its static members; an explicit member contract overrides it. Use `DEPTHn_OR_GREATER` when a depth and every deeper depth must be protected.
 
 The attribute can also annotate a property or an individual accessor. An accessor annotation takes precedence over the property annotation. When neither is present, a getter protects every depth, while a setter or `init` accessor protects `DEPTH1_OR_GREATER`: it may write any direct member of the current instance, but not a member below that level.
 
 The bundled analyzer reports `TTA300` as an error when a supported write reaches a protected depth of an annotated parameter, method, property accessor, or local variable. It uses control-flow-aware may-alias tracking across branches, loops, exception handlers, conditional/coalescing expressions, deconstruction, and `foreach`. Reference-type aliases preserve the contract. Value-type copies allow writes to copied value fields while retaining contracts for shared objects reached through reference fields, and `ref` aliases follow ref reassignment. Contracts declared by overridden or interface members and parameters are combined by their implementations.
 
-It covers assignments (including `??=` and deconstruction), increment/decrement, event subscription changes, array elements, and `ref`/`out` arguments. Calling a method on a protected receiver or passing a protected value by value requires a compatible `ConstAttribute` contract on the target method or parameter. An incompatible source method reports error `TTA304`; unverifiable external metadata reports informational `TTA305`. `ConstAttribute` is invalid on an `out` parameter and reports `TTA301`; it is invalid on a static method or property and reports `TTA303`.
+It covers assignments (including `??=` and deconstruction), increment/decrement, event subscription changes, array elements, and `ref`/`out` arguments. Calling a method on a protected receiver or passing a protected value by value requires a compatible `ConstAttribute` contract on the target method or parameter. An incompatible source method reports error `TTA304`; unverifiable external metadata reports informational `TTA305`. `ConstAttribute` is invalid on an `out` parameter and reports `TTA301`. Static methods and properties may be annotated.
 
 Use `Explicit.Const` to apply the same contract to a local variable. It returns its input unchanged and is aggressively inlined. The ref overload preserves aliasing for ref locals. The call must directly initialize a local variable and use a compile-time constant depth mask; invalid calls report `TTA302`.
 
@@ -144,7 +152,15 @@ public sealed class Cache
 
 ## Ownership contracts
 
-`OwnershipAttribute` documents who is responsible for ultimately releasing an `IDisposable` or `IAsyncDisposable`. It is valid only on disposable fields, properties, parameters, and return values; the analyzer reports `TTA010` as an error when the annotated type implements neither disposal contract.
+Ownership checks are opt-in. Add the following to the consuming project's `.csproj` before relying on ownership diagnostics:
+
+```xml
+<PropertyGroup>
+  <TedToolkitEnableOwnershipAnalysis>true</TedToolkitEnableOwnershipAnalysis>
+</PropertyGroup>
+```
+
+`OwnershipAttribute` documents who is responsible for ultimately releasing an `IDisposable` or `IAsyncDisposable`. It is valid on a disposable value or on a value that structurally carries disposable resources through generic arguments, arrays, or source-defined instance fields; the analyzer reports `TTA010` as an error only when no such resource is present.
 
 `OwnershipAttribute` always requires an `OwnershipKind` argument. In other words, the attribute constructor has no optional kind. `OwnershipKind.UNCHANGED` has the underlying enum value `0` and is therefore the CLR default enum value, but it is not a universal analyzer default for every API boundary:
 
@@ -203,6 +219,29 @@ public sealed class Session : IDisposable
         => _stream = stream;
 
     public void Dispose() => _stream.Dispose();
+}
+```
+
+An owned container transfers responsibility for every disposable resource it structurally carries. The container itself does not need to implement a disposal contract, but its owner must release the contained resources:
+
+```csharp
+public sealed class PartOwner : IDisposable
+{
+    [Ownership(OwnershipKind.TRANSFERRED)]
+    private readonly Dictionary<Guid, ICollection<IObjectPart>> _parts = new();
+
+    public void Dispose()
+    {
+        foreach (var collection in _parts.Values)
+        {
+            foreach (var part in collection)
+            {
+                part.Dispose();
+            }
+        }
+
+        _parts.Clear();
+    }
 }
 ```
 

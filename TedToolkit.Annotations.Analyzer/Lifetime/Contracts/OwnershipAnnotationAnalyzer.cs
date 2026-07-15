@@ -48,7 +48,14 @@ internal static class OwnershipAnnotationAnalyzer
             return;
         }
 
-        if (!contract.IsDisposable(type))
+        // An unconstrained type parameter may be instantiated as either a disposable or a non-disposable type.
+        // Ownership cannot express a meaningful static contract at that boundary, so leave the annotation inert.
+        if (type is ITypeParameterSymbol && !contract.IsDisposable(type))
+        {
+            return;
+        }
+
+        if (!OwnershipResourceShape.CanCarryDisposableResource(type, contract))
         {
             reportDiagnostic(Diagnostic.Create(
                 DisposableLifetimeDiagnostics.OwnershipTargetMustBeDisposable,

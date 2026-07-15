@@ -38,11 +38,6 @@ public sealed class ConstMutationAnalyzer : DiagnosticAnalyzer
     public const string INVALID_LOCAL_DIAGNOSTIC_ID = "TTA302";
 
     /// <summary>
-    /// The diagnostic identifier for a const contract applied to a static member.
-    /// </summary>
-    public const string STATIC_MEMBER_DIAGNOSTIC_ID = "TTA303";
-
-    /// <summary>
     /// The diagnostic identifier for a source method call that lacks a compatible const contract.
     /// </summary>
     public const string SOURCE_CALL_DIAGNOSTIC_ID = "TTA304";
@@ -68,11 +63,6 @@ public sealed class ConstMutationAnalyzer : DiagnosticAnalyzer
     internal static readonly DiagnosticDescriptor InvalidLocal = ConstDiagnostics.InvalidLocal;
 
     /// <summary>
-    /// Describes an invalid const contract on a static member.
-    /// </summary>
-    internal static readonly DiagnosticDescriptor StaticMemberNotAllowed = ConstDiagnostics.StaticMemberNotAllowed;
-
-    /// <summary>
     /// Describes an incompatible call to a source method.
     /// </summary>
     internal static readonly DiagnosticDescriptor SourceCallRequiresConst = ConstDiagnostics.SourceCallRequiresConst;
@@ -91,7 +81,6 @@ public sealed class ConstMutationAnalyzer : DiagnosticAnalyzer
                 MutationNotAllowed,
                 OutParameterNotAllowed,
                 InvalidLocal,
-                StaticMemberNotAllowed,
                 SourceCallRequiresConst,
                 ExternalCallRequiresConst);
         }
@@ -107,8 +96,18 @@ public sealed class ConstMutationAnalyzer : DiagnosticAnalyzer
 
         context.EnableConcurrentExecution();
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+
+        context.RegisterCompilationStartAction(RegisterConstAnalysis);
+    }
+
+    private static void RegisterConstAnalysis(CompilationStartAnalysisContext context)
+    {
+        if (!AnalysisOptions.IsConstAnalysisEnabled(context.Options.AnalyzerConfigOptionsProvider))
+        {
+            return;
+        }
+
         context.RegisterSymbolAction(ConstContractResolver.AnalyzeParameter, SymbolKind.Parameter);
-        context.RegisterSymbolAction(ConstContractResolver.AnalyzeStaticMember, SymbolKind.Method, SymbolKind.Property);
         context.RegisterOperationBlockAction(ConstDataFlowAnalysis.Analyze);
     }
 }

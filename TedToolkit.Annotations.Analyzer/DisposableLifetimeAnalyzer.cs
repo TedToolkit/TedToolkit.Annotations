@@ -61,6 +61,11 @@ public sealed class DisposableLifetimeAnalyzer : DiagnosticAnalyzer
 
     private static void RegisterLifetimeAnalysis(CompilationStartAnalysisContext context)
     {
+        if (!AnalysisOptions.IsOwnershipAnalysisEnabled(context.Options.AnalyzerConfigOptionsProvider))
+        {
+            return;
+        }
+
         var contract = DisposableContract.Create(context.Compilation);
         if (!contract.IsAvailable)
         {

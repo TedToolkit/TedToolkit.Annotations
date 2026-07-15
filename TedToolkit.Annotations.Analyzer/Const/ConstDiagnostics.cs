@@ -36,13 +36,6 @@ internal static class ConstDiagnostics
         DiagnosticSeverity.Error);
 
     /// <summary>
-    /// Reports a const contract applied to a static member.
-    /// </summary>
-    internal static readonly DiagnosticDescriptor StaticMemberNotAllowed = Create(
-        ConstMutationAnalyzer.STATIC_MEMBER_DIAGNOSTIC_ID,
-        DiagnosticSeverity.Error);
-
-    /// <summary>
     /// Reports an incompatible call to a source method.
     /// </summary>
     internal static readonly DiagnosticDescriptor SourceCallRequiresConst = Create(

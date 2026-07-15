@@ -9,7 +9,19 @@
   <Project Path="Build/Build.csproj">
     <Build Project="false" />
   </Project>
-  <Project Path="TedToolkit.Annotations/TedToolkit.Annotations.csproj" />
-  <Project Path="TedToolkit.Annotations.Analyzer/TedToolkit.Annotations.Analyzer.csproj" />
-  <Project Path="TedToolkit.Annotations.Analyzer.Tests/TedToolkit.Annotations.Analyzer.Tests.csproj" />
+  <Project Path="TedToolkit.Annotations.Documentations/TedToolkit.Annotations.Documentations.csproj" />
+  <Project Path="TedToolkit.Annotations.Ownership/TedToolkit.Annotations.Ownership.csproj" />
+  <Project Path="TedToolkit.Annotations.Const/TedToolkit.Annotations.Const.csproj" />
+  <Project Path="TedToolkit.Annotations.Boxing/TedToolkit.Annotations.Boxing.csproj" />
+  <Project Path="TedToolkit.Annotations.Maintenance/TedToolkit.Annotations.Maintenance.csproj" />
+  <Project Path="TedToolkit.Annotations.Documentations.Analyzer/TedToolkit.Annotations.Documentations.Analyzer.csproj" />
+  <Project Path="TedToolkit.Annotations.Ownership.Analyzer/TedToolkit.Annotations.Ownership.Analyzer.csproj" />
+  <Project Path="TedToolkit.Annotations.Const.Analyzer/TedToolkit.Annotations.Const.Analyzer.csproj" />
+  <Project Path="TedToolkit.Annotations.Boxing.Analyzer/TedToolkit.Annotations.Boxing.Analyzer.csproj" />
+  <Project Path="TedToolkit.Annotations.Maintenance.Analyzer/TedToolkit.Annotations.Maintenance.Analyzer.csproj" />
+  <Project Path="TedToolkit.Annotations.Documentations.Tests/TedToolkit.Annotations.Documentations.Tests.csproj" />
+  <Project Path="TedToolkit.Annotations.Ownership.Tests/TedToolkit.Annotations.Ownership.Tests.csproj" />
+  <Project Path="TedToolkit.Annotations.Const.Tests/TedToolkit.Annotations.Const.Tests.csproj" />
+  <Project Path="TedToolkit.Annotations.Boxing.Tests/TedToolkit.Annotations.Boxing.Tests.csproj" />
+  <Project Path="TedToolkit.Annotations.Maintenance.Tests/TedToolkit.Annotations.Maintenance.Tests.csproj" />
 </Solution>

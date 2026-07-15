@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\externals\TedToolkit\props\NugetPackage.props" />
+  <Import Project="..\externals\TedToolkit\props\AlmostAllFrameworks.props" />
+  <PropertyGroup>
+    <Title>Documentation annotations</Title>
+    <Description>Source-level annotations for documented behavior and API contracts.</Description>
+  </PropertyGroup>
+  <ItemGroup><None Include="..\TedToolkit.Annotations.Documentations.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Documentations.Analyzer.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" /></ItemGroup>
+  <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'"><MSBuild Projects="..\TedToolkit.Annotations.Documentations.Analyzer\TedToolkit.Annotations.Documentations.Analyzer.csproj" Targets="Build" Properties="Configuration=$(Configuration)" /></Target>
+</Project>

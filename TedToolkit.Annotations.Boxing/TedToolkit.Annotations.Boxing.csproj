@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\externals\TedToolkit\props\NugetPackage.props" />
+  <Import Project="..\externals\TedToolkit\props\AlmostAllFrameworks.props" />
+  <PropertyGroup>
+    <Title>Explicit boxing annotations</Title>
+    <Description>Helpers for making boxing allocations explicit.</Description>
+  </PropertyGroup>
+  <ItemGroup><None Include="..\TedToolkit.Annotations.Boxing.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Boxing.Analyzer.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" /></ItemGroup>
+  <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'"><MSBuild Projects="..\TedToolkit.Annotations.Boxing.Analyzer\TedToolkit.Annotations.Boxing.Analyzer.csproj" Targets="Build" Properties="Configuration=$(Configuration)" /></Target>
+</Project>

@@ -1,0 +1,75 @@
+// -----------------------------------------------------------------------
+// <copyright file="LifetimeAnalyzerTestHelper.cs" company="TedToolkit">
+// Copyright (c) TedToolkit. All rights reserved.
+// Licensed under the LGPL-3.0 license. See COPYING, COPYING.LESSER file in the project root for full license information.
+// </copyright>
+// -----------------------------------------------------------------------
+
+using System.Collections.Immutable;
+
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Diagnostics;
+
+using TedToolkit.Annotations.Ownership;
+
+namespace TedToolkit.Annotations.Analyzer.Tests.Lifetime;
+
+internal static class LifetimeAnalyzerTestHelper
+{
+    internal static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source)
+    {
+        var compilation = CSharpCompilation.Create(
+            assemblyName: "LifetimeTests",
+            syntaxTrees: [CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Preview))],
+            references: GetMetadataReferences(),
+            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+        var compilerDiagnostics = compilation.GetDiagnostics()
+            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .ToImmutableArray();
+        await Assert.That(compilerDiagnostics).IsEmpty();
+
+        return await compilation
+            .WithAnalyzers([new DisposableLifetimeAnalyzer()], CreateAnalyzerOptions(enableOwnershipAnalysis: true))
+            .GetAnalyzerDiagnosticsAsync();
+    }
+
+    internal static AnalyzerOptions CreateAnalyzerOptions(bool enableOwnershipAnalysis)
+    {
+        var options = enableOwnershipAnalysis
+            ? ImmutableDictionary<string, string>.Empty.Add(
+                OwnershipAnalysisOptions.ENABLE_OWNERSHIP_ANALYSIS_PROPERTY_NAME,
+                bool.TrueString)
+            : ImmutableDictionary<string, string>.Empty;
+        return new AnalyzerOptions([], new TestAnalyzerConfigOptionsProvider(options));
+    }
+
+    private static ImmutableArray<MetadataReference> GetMetadataReferences()
+    {
+        return AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!
+            .ToString()!
+            .Split(Path.PathSeparator)
+            .Where(File.Exists)
+            .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path))
+            .Append(MetadataReference.CreateFromFile(typeof(OwnershipAttribute).Assembly.Location))
+            .ToImmutableArray();
+    }
+
+    private sealed class TestAnalyzerConfigOptionsProvider(ImmutableDictionary<string, string> globalOptions)
+        : AnalyzerConfigOptionsProvider
+    {
+        public override AnalyzerConfigOptions GlobalOptions { get; } = new TestAnalyzerConfigOptions(globalOptions);
+
+        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree) => Empty;
+
+        public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => Empty;
+
+        private static AnalyzerConfigOptions Empty { get; } = new TestAnalyzerConfigOptions([]);
+    }
+
+    private sealed class TestAnalyzerConfigOptions(ImmutableDictionary<string, string> options) : AnalyzerConfigOptions
+    {
+        public override bool TryGetValue(string key, out string value) => options.TryGetValue(key, out value!);
+    }
+}

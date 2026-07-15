@@ -15,6 +15,7 @@ public enum OwnershipFlow
     /// <summary>
     /// Infers the default direction from the annotated API boundary.
     /// Return values and properties default to <see cref="OUTPUT"/>; non-<see langword="ref"/> parameters default to <see cref="INPUT"/>.
+    /// This value selects a direction only; the required <see cref="OwnershipKind"/> still states the ownership behavior.
     /// </summary>
     DEFAULT = 0,
 

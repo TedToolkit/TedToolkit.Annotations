@@ -14,7 +14,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 using TedToolkit.Annotations.Analyzer;
 using TedToolkit.Annotations.Documentations;
 
-namespace TedToolkit.Annotations.Analyzer.Tests;
+namespace TedToolkit.Annotations.Analyzer.Tests.Lifetime.Regression;
 
 internal sealed class DisposableLifetimeAnalyzerTests
 {
@@ -40,6 +40,10 @@ internal sealed class DisposableLifetimeAnalyzerTests
             "TTA008:Warning",
             "TTA009:Warning",
             "TTA010:Error",
+            "TTA011:Warning",
+            "TTA012:Info",
+            "TTA013:Warning",
+            "TTA014:Error",
         ]);
     }
 
@@ -201,7 +205,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Receiver
             {
-                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) { }
+                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) => resource.Dispose();
             }
 
             sealed class Sample
@@ -328,7 +332,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Receiver
             {
-                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] IDisposable resource) { }
+                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] IDisposable resource) => resource.Dispose();
             }
 
             sealed class Sample
@@ -374,10 +378,10 @@ internal sealed class DisposableLifetimeAnalyzerTests
     }
 
     /// <summary>
-    /// 验证覆盖仍由当前方法拥有的资源会报告旧实例泄漏。
+    /// 验证覆盖仍由当前方法拥有的资源会报告覆盖错误。
     /// </summary>
     [Test]
-    public async Task Should_report_leak_when_owned_disposable_is_overwritten()
+    public async Task Should_report_overwrite_when_owned_disposable_is_overwritten()
     {
         var diagnostics = await AnalyzeAsync("""
             using System;
@@ -398,7 +402,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
             }
             """);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA004"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA011"]);
     }
 
     /// <summary>
@@ -545,8 +549,11 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Owner
             {
+                [Ownership(OwnershipKind.UNCHANGED)]
+                private readonly Resource _resource = new Resource();
+
                 [return: Ownership(OwnershipKind.UNCHANGED)]
-                public Resource GetResource() => new Resource();
+                public Resource GetResource() => _resource;
             }
 
             sealed class Sample
@@ -856,7 +863,10 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Owner
             {
-                public void Get([Ownership(OwnershipKind.UNCHANGED)] out Resource resource) => resource = new Resource();
+                [Ownership(OwnershipKind.UNCHANGED)]
+                private readonly Resource _resource = new Resource();
+
+                public void Get([Ownership(OwnershipKind.UNCHANGED)] out Resource resource) => resource = _resource;
             }
 
             sealed class Sample
@@ -892,7 +902,11 @@ internal sealed class DisposableLifetimeAnalyzerTests
                 public void Replace(
                     [Ownership(OwnershipKind.TRANSFERRED, OwnershipFlow.INPUT)]
                     [Ownership(OwnershipKind.TRANSFERRED, OwnershipFlow.OUTPUT)]
-                    ref Resource resource) => resource = new Resource();
+                    ref Resource resource)
+                {
+                    resource.Dispose();
+                    resource = new Resource();
+                }
             }
 
             sealed class Sample
@@ -1007,7 +1021,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Receiver
             {
-                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] in Resource resource) { }
+                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] in Resource resource) => resource.Dispose();
             }
 
             sealed class Sample
@@ -1110,10 +1124,17 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Replacer
             {
+                [Ownership(OwnershipKind.UNCHANGED)]
+                private readonly Resource _replacement = new Resource();
+
                 public void Replace(
                     [Ownership(OwnershipKind.TRANSFERRED, OwnershipFlow.INPUT)]
                     [Ownership(OwnershipKind.UNCHANGED, OwnershipFlow.OUTPUT)]
-                    ref Resource resource) => resource = new Resource();
+                    ref Resource resource)
+                {
+                    resource.Dispose();
+                    resource = _replacement;
+                }
             }
 
             sealed class Sample
@@ -1295,7 +1316,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Receiver
             {
-                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) { }
+                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) => resource.Dispose();
                 public void Invoke([CallbackLifetime(CallbackLifetimeKind.IMMEDIATE)] Action callback) => callback();
             }
 
@@ -1406,7 +1427,114 @@ internal sealed class DisposableLifetimeAnalyzerTests
             }
             """);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA004", "TTA006"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA006", "TTA011"]);
+    }
+
+    /// <summary>
+    /// 验证覆盖局部变量或拥有的字段前必须先释放原有资源。
+    /// </summary>
+    [Test]
+    public async Task Should_report_overwrite_when_owned_local_or_field_is_reassigned_before_release()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Sample : IDisposable
+            {
+                [Ownership(OwnershipKind.TRANSFERRED)]
+                private Resource _field = new Resource();
+
+                public void Dispose() => _field.Dispose();
+
+                void Execute()
+                {
+                    var local = new Resource();
+                    local = new Resource();
+                    local.Dispose();
+                    _field = new Resource();
+                }
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA011", "TTA011"]);
+    }
+
+    /// <summary>
+    /// 验证构造函数接管的字段被覆盖前同样必须先释放原有资源。
+    /// </summary>
+    [Test]
+    public async Task Should_report_overwrite_when_inferred_owned_field_is_reassigned_before_release()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Sample : IDisposable
+            {
+                private Resource _field;
+
+                public Sample([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) => _field = resource;
+
+                public void Dispose() => _field.Dispose();
+
+                void Execute() => _field = new Resource();
+            }
+            """);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA011"]);
+    }
+
+    /// <summary>
+    /// 验证覆盖拥有的可释放属性时会报告信息诊断，释放旧值后覆盖则不报告。
+    /// </summary>
+    [Test]
+    [Arguments("Resource = new Resource();", "TTA012")]
+    [Arguments("Resource.Dispose(); Resource = new Resource();", "")]
+    public async Task Should_report_info_when_owned_property_is_overwritten_before_release(
+        string statements,
+        string expectedDiagnosticId)
+    {
+        var diagnostics = await AnalyzeAsync($$"""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Resource : IDisposable
+            {
+                public void Dispose() { }
+            }
+
+            sealed class Sample : IDisposable
+            {
+                [Ownership(OwnershipKind.TRANSFERRED)]
+                private Resource Resource { get; set; } = new Resource();
+
+                public void Dispose() => Resource.Dispose();
+
+                void Execute()
+                {
+                    {{statements}}
+                }
+            }
+            """);
+
+        if (string.IsNullOrEmpty(expectedDiagnosticId))
+        {
+            await Assert.That(diagnostics).IsEmpty();
+            return;
+        }
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo([expectedDiagnosticId]);
     }
 
     /// <summary>
@@ -1428,7 +1556,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Receiver
             {
-                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) { }
+                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) => resource.Dispose();
             }
 
             sealed class Sample
@@ -1464,7 +1592,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
             sealed class Receiver
             {
-                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) { }
+                public void Attach([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) => resource.Dispose();
             }
 
             sealed class Factory
@@ -1530,6 +1658,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
         var trustedPlatformAssemblies = (string?)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES");
         return trustedPlatformAssemblies!
             .Split(Path.PathSeparator)
+            .Where(File.Exists)
             .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path))
             .Append(MetadataReference.CreateFromFile(typeof(DocumentationAttribute).Assembly.Location))
             .ToImmutableArray();

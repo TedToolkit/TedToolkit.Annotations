@@ -34,6 +34,14 @@ internal static class DisposableLifetimeDiagnostics
 
     private const string OWNERSHIP_TARGET_MUST_BE_DISPOSABLE_ID = "TTA010";
 
+    private const string OWNED_RESOURCE_OVERWRITTEN_ID = "TTA011";
+
+    private const string OWNED_PROPERTY_OVERWRITTEN_ID = "TTA012";
+
+    private const string UNOBSERVED_ASYNC_DISPOSE_ID = "TTA013";
+
+    private const string INVALID_OWNERSHIP_CONTRACT_ID = "TTA014";
+
     /// <summary>
     /// Reports a resource that is disposed more than once.
     /// </summary>
@@ -94,6 +102,34 @@ internal static class DisposableLifetimeDiagnostics
     /// </summary>
     internal static readonly DiagnosticDescriptor OwnershipTargetMustBeDisposable = CreateDiagnostic(
         OWNERSHIP_TARGET_MUST_BE_DISPOSABLE_ID,
+        DiagnosticSeverity.Error);
+
+    /// <summary>
+    /// Reports an owned resource that is overwritten before being released.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor OwnedResourceOverwritten = CreateDiagnostic(
+        OWNED_RESOURCE_OVERWRITTEN_ID,
+        DiagnosticSeverity.Warning);
+
+    /// <summary>
+    /// Reports an owned property that may be overwritten before being released.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor OwnedPropertyOverwritten = CreateDiagnostic(
+        OWNED_PROPERTY_OVERWRITTEN_ID,
+        DiagnosticSeverity.Info);
+
+    /// <summary>
+    /// Reports an asynchronous release whose result is neither awaited nor returned.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor UnobservedAsyncDispose = CreateDiagnostic(
+        UNOBSERVED_ASYNC_DISPOSE_ID,
+        DiagnosticSeverity.Warning);
+
+    /// <summary>
+    /// Reports conflicting ownership annotations or an invalid ownership flow.
+    /// </summary>
+    internal static readonly DiagnosticDescriptor InvalidOwnershipContract = CreateDiagnostic(
+        INVALID_OWNERSHIP_CONTRACT_ID,
         DiagnosticSeverity.Error);
 
     private static DiagnosticDescriptor CreateDiagnostic(

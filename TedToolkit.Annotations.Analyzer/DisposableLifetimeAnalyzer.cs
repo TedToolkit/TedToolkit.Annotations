@@ -5,12 +5,15 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-using TedToolkit.Annotations.Analyzer.Lifetime;
+using TedToolkit.Annotations.Analyzer.Lifetime.Analysis.Local;
+using TedToolkit.Annotations.Analyzer.Lifetime.Analysis.Members;
+using TedToolkit.Annotations.Analyzer.Lifetime.Contracts;
 
 namespace TedToolkit.Annotations.Analyzer;
 
@@ -35,7 +38,11 @@ public sealed class DisposableLifetimeAnalyzer : DiagnosticAnalyzer
                 DisposableLifetimeDiagnostics.DisposedResourceReturned,
                 DisposableLifetimeDiagnostics.OwnedFieldRequiresDisposableType,
                 DisposableLifetimeDiagnostics.OwnedFieldNotReleased,
-                DisposableLifetimeDiagnostics.OwnershipTargetMustBeDisposable);
+                DisposableLifetimeDiagnostics.OwnershipTargetMustBeDisposable,
+                DisposableLifetimeDiagnostics.OwnedResourceOverwritten,
+                DisposableLifetimeDiagnostics.OwnedPropertyOverwritten,
+                DisposableLifetimeDiagnostics.UnobservedAsyncDispose,
+                DisposableLifetimeDiagnostics.InvalidOwnershipContract);
         }
     }
 
@@ -54,22 +61,45 @@ public sealed class DisposableLifetimeAnalyzer : DiagnosticAnalyzer
 
     private static void RegisterLifetimeAnalysis(CompilationStartAnalysisContext context)
     {
-        var disposableType = context.Compilation.GetTypeByMetadataName("System.IDisposable");
-        if (disposableType is null)
+        var contract = DisposableContract.Create(context.Compilation);
+        if (!contract.IsAvailable)
         {
             return;
         }
 
+        var analyzedRoots = new ConcurrentDictionary<(SyntaxTree Tree, int Start, int Length), byte>();
+        var localDiagnostics = new ConcurrentBag<Diagnostic>();
+
+        // Operation blocks can expose the same CFG root more than once. Analyze each syntax root once, then
+        // filter cross-block leak diagnostics at compilation end when all competing path evidence is available.
         context.RegisterOperationBlockAction(blockContext =>
         {
             foreach (var operationBlock in blockContext.OperationBlocks)
             {
-                var walker = new LocalDisposableLifetimeWalker(disposableType, blockContext.ReportDiagnostic);
-                walker.Visit(operationBlock);
-                walker.ReportUndisposedResources();
+                var root = LocalDisposableLifetimeAnalysis.GetRoot(operationBlock);
+                var rootKey = (root.Syntax.SyntaxTree, root.Syntax.SpanStart, root.Syntax.Span.Length);
+                if (!analyzedRoots.TryAdd(rootKey, 0))
+                {
+                    continue;
+                }
+
+                LocalDisposableLifetimeAnalysis.Analyze(
+                    root,
+                    blockContext.OwningSymbol as IMethodSymbol,
+                    contract,
+                    localDiagnostics.Add,
+                    blockContext.CancellationToken);
+            }
+        });
+        context.RegisterCompilationEndAction(compilationEndContext =>
+        {
+            foreach (var diagnostic in LocalDisposableLifetimeAnalysis.FilterRedundantLeaks(localDiagnostics))
+            {
+                compilationEndContext.ReportDiagnostic(diagnostic);
             }
         });
 
-        OwnershipLifetimeAnalysis.Register(context, disposableType);
+        OwnershipAnnotationAnalyzer.Register(context, contract);
+        OwnedMemberLifetimeAnalysis.Register(context, contract);
     }
 }

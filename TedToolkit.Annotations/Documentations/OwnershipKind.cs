@@ -9,11 +9,12 @@ namespace TedToolkit.Annotations.Documentations;
 
 /// <summary>
 /// Specifies whether ownership changes while a value crosses an API boundary.
+/// <see cref="UNCHANGED"/> is the CLR default enum value, but unannotated API boundaries use target-specific analyzer defaults.
 /// </summary>
 public enum OwnershipKind
 {
     /// <summary>
-    /// Ownership does not change; the receiving side only borrows the value.
+    /// Ownership does not change; the receiving side only borrows the value. This is the underlying enum value zero.
     /// </summary>
     UNCHANGED = 0,
 

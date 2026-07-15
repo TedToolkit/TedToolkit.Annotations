@@ -9,10 +9,12 @@ namespace TedToolkit.Annotations.Documentations;
 
 /// <summary>
 /// Documents whether ownership changes while the annotated value crosses an API boundary or is stored in a field.
+/// The <paramref name="kind"/> argument is required; when the attribute is absent, the analyzer applies boundary-specific defaults.
+/// Method returns and <see langword="out"/> parameters transfer ownership by default, while ordinary parameters and property getters are borrowed by default.
 /// Specify <paramref name="flow"/> for <see langword="ref"/> parameters and properties whose input and output ownership differ.
 /// For a property, <see cref="OwnershipFlow.INPUT"/> applies to its setter and <see cref="OwnershipFlow.OUTPUT"/> applies to its getter.
 /// </summary>
-/// <param name="kind">Whether ownership changes.</param>
+/// <param name="kind">Whether ownership changes in the selected flow. This argument is required.</param>
 /// <param name="flow">The value flow; inferred when omitted.</param>
 [AttributeUsage(
     AttributeTargets.ReturnValue | AttributeTargets.Property | AttributeTargets.Parameter | AttributeTargets.Field,

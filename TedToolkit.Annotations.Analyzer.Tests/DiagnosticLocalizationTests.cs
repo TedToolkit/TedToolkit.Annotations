@@ -7,7 +7,9 @@
 
 using System.Collections.Immutable;
 using System.Globalization;
+
 using Microsoft.CodeAnalysis;
+
 using TedToolkit.Annotations.Analyzer;
 
 namespace TedToolkit.Annotations.Analyzer.Tests;
@@ -25,6 +27,7 @@ internal sealed class DiagnosticLocalizationTests
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Title.ToString(culture))).Contains("Disposed resource is used");
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Title.ToString(culture))).Contains("Technical-debt API is invoked");
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Title.ToString(culture))).Contains("Const contract is violated");
     }
 
     /// <summary>
@@ -38,10 +41,19 @@ internal sealed class DiagnosticLocalizationTests
     [Arguments("TTA005", "回调的生命周期可能超过其捕获的资源")]
     [Arguments("TTA006", "可释放资源是借用资源")]
     [Arguments("TTA007", "返回了已释放的资源")]
+    [Arguments("TTA011", "拥有的可释放资源被覆盖")]
+    [Arguments("TTA012", "拥有的可释放属性被覆盖")]
     [Arguments("TTA100", "调用了变通 API")]
     [Arguments("TTA101", "调用了临时实现")]
     [Arguments("TTA102", "调用了技术债 API")]
     [Arguments("TTA103", "调用了需要清理的 API")]
+    [Arguments("TTA201", "应显式执行装箱转换")]
+    [Arguments("TTA300", "违反了 Const 契约")]
+    [Arguments("TTA301", "Const 不能标注 out 参数")]
+    [Arguments("TTA302", "Explicit.Const 用法无效")]
+    [Arguments("TTA303", "Const 不能标注静态成员")]
+    [Arguments("TTA304", "源码方法需要兼容的 Const 契约")]
+    [Arguments("TTA305", "外部方法没有兼容的 Const 契约")]
     public async Task Should_localize_diagnostic_title_when_chinese_is_requested(string diagnosticId, string expectedTitle)
     {
         var diagnostic = GetAllDiagnostics().Single(candidate => candidate.Id == diagnosticId);
@@ -51,5 +63,7 @@ internal sealed class DiagnosticLocalizationTests
 
     private static ImmutableArray<DiagnosticDescriptor> GetAllDiagnostics() =>
         new DisposableLifetimeAnalyzer().SupportedDiagnostics
-            .AddRange(new MaintenanceUsageAnalyzer().SupportedDiagnostics);
+            .AddRange(new MaintenanceUsageAnalyzer().SupportedDiagnostics)
+            .AddRange(new BoxingAnalyzer().SupportedDiagnostics)
+            .AddRange(new ConstMutationAnalyzer().SupportedDiagnostics);
 }

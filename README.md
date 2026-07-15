@@ -1,9 +1,14 @@
 # TedToolkit.Annotations
 
-A small .NET library of attributes for making code intent explicit. It has two complementary uses:
+TedToolkit.Annotations is a .NET annotation library with a bundled Roslyn analyzer. It makes behavioral contracts, resource ownership, intentional boxing, and planned maintenance visible in C# source without introducing application logic.
 
-- **Maintenance annotations** identify work that should be revisited: external workarounds, temporary implementations, technical debt, and required cleanup.
-- **Documentation annotations** describe contracts and expected behavior: invariants, preconditions, postconditions, and individual behavior cases.
+## Packages and projects
+
+| Project | Purpose |
+| --- | --- |
+| [`TedToolkit.Annotations`](TedToolkit.Annotations/README.md) | Public attributes and the `Explicit` marker API. This is the NuGet package consumed by applications and libraries. |
+| [`TedToolkit.Annotations.Analyzer`](TedToolkit.Annotations.Analyzer/README.md) | Roslyn analyzers and code fixes bundled into the annotations package. |
+| `TedToolkit.Annotations.Analyzer.Tests` | TUnit regression and behavior tests for the analyzers and code fixes. |
 
 ## Installation
 
@@ -11,156 +16,53 @@ A small .NET library of attributes for making code intent explicit. It has two c
 dotnet add package TedToolkit.Annotations
 ```
 
-## Maintenance annotations
+The package adds both the attributes and its analyzer. No separate analyzer package is required.
 
-Maintenance annotations apply to constructors and methods. They are marked with `Conditional("ANNOTATIONS_MAINTENANCE")`, so the attributes are emitted only in builds that define that symbol. This lets a project retain maintenance context in source without adding the metadata to its normal builds.
+## What it provides
 
-```csharp
-using TedToolkit.Annotations.Maintenances;
+- **Disposable lifetime analysis** tracks ownership, disposal, transfers, aliases, callbacks, and owned members for `IDisposable` and `IAsyncDisposable` values.
+- **Const contracts** protect selected depths of an object graph from mutation and verify compatible contracts at method-call boundaries.
+- **Explicit boxing** makes allocation-producing boxing conversions visible through `Explicit.Box`; a code fix rewrites implicit boxing.
+- **Contract documentation** records preconditions, postconditions, invariants, assumptions, side effects, concurrency requirements, callback lifetime, and behavior cases.
+- **Maintenance annotations** identify workarounds, temporary implementations, technical debt, and cleanup requirements at their call sites.
+- **XML documentation generation** offers a code fix that derives `<exception>` entries from typed precondition annotations.
 
-public sealed class OrderImporter
-{
-    [Workaround("Supplier API returns duplicate records.",
-        RemoveWhen = "Supplier API v3 is the minimum supported version")]
-    public void Import() { }
+See the [annotations guide](TedToolkit.Annotations/README.md) for API usage and the [analyzer guide](TedToolkit.Annotations.Analyzer/README.md) for the complete diagnostic catalog.
 
-    [TemporaryImplementation("Use polling until webhooks are available.",
-        RemoveWhen = "Webhook delivery is enabled")]
-    public void RefreshStatus() { }
+## Conditional metadata
 
-    [TechnicalDebt(TechnicalDebtKind.Performance,
-        "Load the full result set to preserve the existing ordering.",
-        RemoveWhen = "The database query has a stable ordering")]
-    public void GetOrders() { }
+Most documentation attributes are always emitted. Two high-volume, source-oriented groups are conditional:
 
-    [CleanupRequired("Consolidate duplicate validation paths.")]
-    public void Validate() { }
-}
-```
+| Symbol | Metadata enabled |
+| --- | --- |
+| `ANNOTATIONS_MAINTENANCE` | Maintenance attributes such as `WorkaroundAttribute` and `TechnicalDebtAttribute`. |
+| `ANNOTATIONS_BEHAVIOR_CASE` | Individual `BehaviorCaseAttribute` scenarios. |
 
-`TechnicalDebtKind` categorizes debt as `Design`, `Compatibility`, `Performance`, or `Reliability`. All maintenance annotations accept a reason; `RemoveWhen` records the condition under which the annotation can be removed.
-
-To emit maintenance attributes for reflection or analyzer tooling, define `ANNOTATIONS_MAINTENANCE` in the consuming project:
+Define a symbol only when reflection or downstream tooling needs that metadata:
 
 ```xml
 <PropertyGroup>
-  <DefineConstants>$(DefineConstants);ANNOTATIONS_MAINTENANCE</DefineConstants>
+  <DefineConstants>$(DefineConstants);ANNOTATIONS_MAINTENANCE;ANNOTATIONS_BEHAVIOR_CASE</DefineConstants>
 </PropertyGroup>
 ```
 
-## Documentation annotations
+The annotations remain in source when a symbol is absent.
 
-The documentation annotations record contracts and examples directly on types and members. They live in the `TedToolkit.Annotations.Documentations` namespace and do not validate code or change runtime behavior. `BehaviorCaseAttribute` usage is emitted only when `ANNOTATIONS_BEHAVIOR_CASE` is defined, keeping individual test-like scenarios out of normal assembly metadata.
-
-```csharp
-using TedToolkit.Annotations.Documentations;
-
-[Invariant("The balance is never negative.")]
-public sealed class Account
-{
-    [Precondition("Amount is greater than zero.")]
-    [Postcondition("The balance increases by the supplied amount.")]
-    [BehaviorCase("Amount is negative", "Throws for an invalid deposit.", exceptionType: typeof(ArgumentOutOfRangeException))]
-    public void Deposit(decimal amount) { }
-}
-```
-
-### Document parameters and return values
-
-```csharp
-using TedToolkit.Annotations.Documentations;
-
-public sealed class Inventory
-{
-    [return: Postcondition("The result is non-negative.")]
-    public int Reserve(
-        [Precondition<ArgumentOutOfRangeException>("Must be greater than zero.")]
-        int quantity)
-    {
-        return quantity;
-    }
-}
-```
-
-`PreconditionAttribute` can optionally record the exception thrown when a condition is not met. Use `PreconditionAttribute<TException>` for a concise, type-safe C# 11+ form, or pass the type explicitly when supporting earlier language versions:
-
-```csharp
-[Precondition("Must be greater than zero.", typeof(ArgumentOutOfRangeException))]
-int quantity
-```
-
-`BehaviorCaseAttribute` can likewise record the exception expected for a specific behavior case. Use `BehaviorCaseAttribute<TException>` for a concise, type-safe C# 11+ form, or pass the type explicitly for earlier language versions. Define `ANNOTATIONS_BEHAVIOR_CASE` when reflection or analyzer tooling needs those annotations:
-
-```csharp
-[BehaviorCase<FormatException>("The input is malformed.", "Rejects the request.")]
-
-// C# 10 and earlier:
-[BehaviorCase("The input is malformed.", "Rejects the request.", exceptionType: typeof(FormatException))]
-```
-
-```xml
-<PropertyGroup>
-  <DefineConstants>$(DefineConstants);ANNOTATIONS_BEHAVIOR_CASE</DefineConstants>
-</PropertyGroup>
-```
-
-Use `AssumptionAttribute` for conditions controlled outside a member and `SideEffectAttribute` for observable state changes:
-
-```csharp
-using TedToolkit.Annotations.Documentations;
-
-public sealed class SessionService
-{
-    [Assumption("The caller has authenticated the request.")]
-    [SideEffect("Revokes all refresh tokens for the user.")]
-    [BehaviorCase("The user has no active sessions", "Completes without changes.", hasUnitTest: true)]
-    public void SignOutEverywhere(Guid userId) { }
-}
-```
-
-Use `IdempotentAttribute` when safely repeating an operation has no additional observable effect. Use `ThreadSafetyAttribute` to record concurrency guarantees or synchronization requirements. `TransfersOwnershipAttribute` is applied directly to a parameter when the receiving member becomes responsible for its lifetime:
-
-```csharp
-[ThreadSafety("Concurrent reads are supported; writes require external synchronization.")]
-public sealed class Cache
-{
-    [Idempotent]
-    public void Clear() { }
-
-    public void Attach([TransfersOwnership] Stream stream) { }
-
-    public void Enqueue(
-        [CallbackLifetime(CallbackLifetimeKind.DEFERRED)] Func<Task> work) { }
-}
-```
-
-- `InvariantAttribute` documents a condition that must hold for a class, struct, or interface.
-- `PreconditionAttribute` documents a required state or input for a method, constructor, property, or parameter.
-- `PostconditionAttribute` documents the state guaranteed after a method, constructor, property, or return value.
-- `BehaviorCaseAttribute` documents a condition and expected result, optionally noting whether it has a unit test.
-- `IdempotentAttribute` documents that repeating an operation has no additional observable effect.
-- `ThreadSafetyAttribute` documents thread-safety guarantees or synchronization requirements.
-- `TransfersOwnershipAttribute` documents a parameter whose ownership transfers to the receiving member.
-- `CallbackLifetimeAttribute` documents whether a callback parameter is invoked immediately, retained for deferred invocation, or retained as a subscription.
-- `MayBlockAttribute` documents an operation that can block the calling thread and the condition that causes it.
-- `ThreadAffinityAttribute` documents a required thread or synchronization context.
-
-`ThreadSafetyAttribute` answers whether concurrent calls are safe and what synchronization they require. `ThreadAffinityAttribute` answers where code must run. `MayBlockAttribute` answers whether synchronous code can block its caller and why:
-
-```csharp
-[ThreadAffinity("Must be called from the UI thread.")]
-public void UpdateView() { }
-
-[MayBlock("Performs synchronous disk I/O.")]
-public void Flush() { }
-```
-
-## Supported frameworks
+## Supported target frameworks
 
 - .NET 6.0 through .NET 10.0
 - .NET Framework 4.7.2 and 4.8
 - .NET Standard 2.0 and 2.1
 
+The analyzer targets .NET Standard 2.0 for Roslyn host compatibility.
+
+## Build and test
+
+```shell
+dotnet build TedToolkit.Annotations.slnx --configuration Release
+dotnet run --project TedToolkit.Annotations.Analyzer.Tests/TedToolkit.Annotations.Analyzer.Tests.csproj --configuration Release
+```
+
 ## License
 
-Licensed under the [LGPL-3.0](COPYING.LESSER).
+Licensed under the [GNU Lesser General Public License v3.0](COPYING.LESSER).

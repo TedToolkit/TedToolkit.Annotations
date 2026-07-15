@@ -6,6 +6,16 @@ Roslyn analyzers and code fixes bundled with the `TedToolkit.Annotations` NuGet 
 
 ### Disposable lifetime and ownership
 
+Disposable lifetime and ownership checks are disabled by default. Enable them per project when the project follows the ownership contracts:
+
+```xml
+<PropertyGroup>
+  <TedToolkitEnableOwnershipAnalysis>true</TedToolkitEnableOwnershipAnalysis>
+</PropertyGroup>
+```
+
+When the property is absent or set to any value other than `true`, rules `TTA001` through `TTA014` do not run.
+
 | ID | Severity | Meaning |
 | --- | --- | --- |
 | `TTA001` | Error | An owned disposable resource is disposed more than once. |
@@ -17,7 +27,7 @@ Roslyn analyzers and code fixes bundled with the `TedToolkit.Annotations` NuGet 
 | `TTA007` | Error | A disposed resource is returned to the caller. |
 | `TTA008` | Warning | A type that owns a disposable member lacks the compatible disposal interface. |
 | `TTA009` | Warning | An owned disposable field or property is not released or transferred by the disposal member. |
-| `TTA010` | Error | `OwnershipAttribute` is applied to a value that implements neither `IDisposable` nor `IAsyncDisposable`. |
+| `TTA010` | Error | `OwnershipAttribute` is applied to a value that neither implements a disposal contract nor structurally carries a disposable resource. |
 | `TTA011` | Warning | An owned disposable resource is overwritten before its previous value is released. |
 | `TTA012` | Info | An owned disposable property may be overwritten before its previous value is released. |
 | `TTA013` | Warning | The result of `DisposeAsync` is neither awaited, returned, nor otherwise observed. |
@@ -49,12 +59,21 @@ The `TTA200` code fix adds missing exception entries without duplicating existin
 
 ### Const contracts
 
+Const checks are disabled by default. Enable them per project when the project uses `ConstAttribute` contracts:
+
+```xml
+<PropertyGroup>
+  <TedToolkitEnableConstAnalysis>true</TedToolkitEnableConstAnalysis>
+</PropertyGroup>
+```
+
+When the property is absent or set to any value other than `true`, rules `TTA300` through `TTA305` do not run.
+
 | ID | Severity | Meaning |
 | --- | --- | --- |
 | `TTA300` | Error | A write reaches an object-graph depth protected by a const contract. |
 | `TTA301` | Error | `ConstAttribute` is applied to an `out` parameter. |
 | `TTA302` | Error | `Explicit.Const` is not a direct local initializer or its depth mask is not constant. |
-| `TTA303` | Error | `ConstAttribute` is applied to a static method or property. |
 | `TTA304` | Error | A source method call lacks a compatible const receiver or parameter contract. |
 | `TTA305` | Info | An external method call has no verifiable compatible const contract. |
 

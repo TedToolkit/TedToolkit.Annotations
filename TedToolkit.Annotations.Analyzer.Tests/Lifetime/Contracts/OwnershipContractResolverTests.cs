@@ -146,6 +146,37 @@ internal sealed class OwnershipContractResolverTests
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TTA014"]);
     }
 
+    /// <summary>
+    /// 验证未约束的泛型返回值可以声明所有权注解。
+    /// </summary>
+    [Test]
+    public async Task Should_allow_ownership_annotation_on_unconstrained_generic_return()
+    {
+        var diagnostics = await LifetimeAnalyzerTestHelper.AnalyzeAsync(CreateSource("""
+            interface IGeometryObject
+            {
+            }
+
+            delegate TRawValue GetDataHandler<TGeometry, TRawValue>(scoped in TGeometry obj)
+                where TGeometry : struct, IGeometryObject;
+
+            static class GeometryData
+            {
+                [return: Ownership(OwnershipKind.UNCHANGED)]
+                public static TRawValue GetData<TRawValue, TGeometry>(
+                    scoped in TGeometry obj,
+                    GetDataHandler<TGeometry, TRawValue> creator,
+                    string implementName)
+                    where TGeometry : struct, IGeometryObject
+                {
+                    return creator(in obj);
+                }
+            }
+            """));
+
+        await Assert.That(diagnostics).IsEmpty();
+    }
+
     private static string CreateSource(string members)
     {
         return $$"""

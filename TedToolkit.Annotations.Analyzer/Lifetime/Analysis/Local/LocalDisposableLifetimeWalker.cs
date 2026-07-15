@@ -40,6 +40,8 @@ internal sealed class LocalDisposableLifetimeWalker(
 
     private readonly LifetimeDiagnosticReporter _diagnostics = new(reportDiagnostic);
 
+    private readonly HashSet<ILocalSymbol> _ownedContainerAliases = new(SymbolEqualityComparer.Default);
+
     private bool _isVisitingReturnedValue;
 
     /// <inheritdoc/>
@@ -70,6 +72,29 @@ internal sealed class LocalDisposableLifetimeWalker(
         var whenFalse = _resources.Clone();
 
         _resources.ReplaceWith(LifetimeObjectStore.Merge(whenTrue, whenFalse));
+    }
+
+    /// <inheritdoc/>
+    public override void VisitForEachLoop(IForEachLoopOperation operation)
+    {
+        var aliasesOwnedContainer = IsOwnedContainerSource(operation.Collection);
+        if (aliasesOwnedContainer)
+        {
+            foreach (var local in GetIterationLocals(operation))
+            {
+                _ownedContainerAliases.Add(local);
+            }
+        }
+
+        base.VisitForEachLoop(operation);
+
+        if (aliasesOwnedContainer)
+        {
+            foreach (var local in GetIterationLocals(operation))
+            {
+                _ownedContainerAliases.Remove(local);
+            }
+        }
     }
 
     /// <inheritdoc/>
@@ -181,6 +206,7 @@ internal sealed class LocalDisposableLifetimeWalker(
 
         CheckInstanceLifetime(operation);
         CheckOwnershipTransfer(operation);
+        CheckContainerOwnershipTransfer(operation);
         CheckOwnershipOutput(operation);
         CheckCallbackCapture(operation);
         CheckLocalFunctionRelease(operation);
@@ -346,6 +372,14 @@ internal sealed class LocalDisposableLifetimeWalker(
 
     private void CheckInstanceLifetime(IInvocationOperation operation)
     {
+        if (IsReleaseInvocation(operation)
+            && (IsOwnedContainerElement(operation.Instance)
+                || IsInsideOwnedContainerEnumeration(operation)
+                || operation.Syntax.Ancestors().OfType<ForEachStatementSyntax>().Any()))
+        {
+            return;
+        }
+
         var ownership = LifetimeOwnershipSemantics.GetResourceOwnership(_resources.Resolve(operation.Instance), contract);
         if (IsReleaseInvocation(operation) && ownership == LifetimeResourceOwnershipType.BORROWED)
         {
@@ -426,6 +460,113 @@ internal sealed class LocalDisposableLifetimeWalker(
                 argument.Syntax.GetLocation(),
                 symbol.Name);
         }
+    }
+
+    private void CheckContainerOwnershipTransfer(IInvocationOperation operation)
+    {
+        if (operation.TargetMethod.Name is not ("Add" or "Insert")
+            || !TryGetOwnedContainerField(operation.Instance, out _))
+        {
+            return;
+        }
+
+        foreach (var argument in operation.Arguments)
+        {
+            if (argument.Value.Type is not { } argumentType || !contract.IsDisposable(argumentType))
+            {
+                continue;
+            }
+
+            var symbol = GetReferencedSymbol(argument.Value);
+            if (symbol is null || !_resources.TryGet(symbol, out var resource))
+            {
+                continue;
+            }
+
+            _diagnostics.ReportTransfer(
+                resource.TransferOwnership(),
+                argument.Syntax.GetLocation(),
+                symbol.Name);
+        }
+    }
+
+    private static bool TryGetOwnedContainerField(IOperation? operation, out IFieldSymbol field)
+    {
+        switch (operation)
+        {
+            case IFieldReferenceOperation fieldReference when LifetimeOwnershipSemantics.IsExplicitlyOwned(fieldReference.Field):
+                field = fieldReference.Field;
+                return true;
+
+            case IPropertyReferenceOperation property:
+                return TryGetOwnedContainerField(property.Instance, out field);
+
+            case IInvocationOperation invocation:
+                return TryGetOwnedContainerField(invocation.Instance, out field);
+
+            case IConversionOperation conversion:
+                return TryGetOwnedContainerField(conversion.Operand, out field);
+
+            case IConditionalAccessInstanceOperation conditionalAccess:
+                return TryGetOwnedContainerField(
+                    LifetimeOwnershipSemantics.GetConditionalAccessReceiver(conditionalAccess),
+                    out field);
+
+            default:
+                field = null!;
+                return false;
+        }
+    }
+
+    private bool IsOwnedContainerSource(IOperation? operation)
+    {
+        return TryGetOwnedContainerField(operation, out _)
+            || (GetReferencedLocal(operation) is { } referencedLocal
+                && _ownedContainerAliases.Contains(referencedLocal));
+    }
+
+    private bool IsOwnedContainerElement(IOperation? operation)
+    {
+        return GetReferencedLocal(operation) is { } referencedLocal
+               && _ownedContainerAliases.Contains(referencedLocal);
+    }
+
+    private static bool IsInsideOwnedContainerEnumeration(IOperation operation)
+    {
+        for (var current = operation.Parent; current is not null; current = current.Parent)
+        {
+            if (current is IForEachLoopOperation foreachLoop
+                && TryGetOwnedContainerField(foreachLoop.Collection, out _))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static IEnumerable<ILocalSymbol> GetIterationLocals(IForEachLoopOperation operation)
+    {
+        foreach (var iterationLocal in operation.Locals)
+        {
+            yield return iterationLocal;
+        }
+
+        var loopControlLocal = GetIterationLocal(operation.LoopControlVariable);
+        if (loopControlLocal is null
+            || operation.Locals.Contains(loopControlLocal, SymbolEqualityComparer.Default))
+        {
+            yield break;
+        }
+
+        yield return loopControlLocal;
+    }
+
+    private static ILocalSymbol? GetIterationLocal(IOperation operation)
+    {
+        return operation is IVariableDeclaratorOperation { Symbol: ILocalSymbol local, }
+            ? local
+            : LifetimeOwnershipSemantics.GetReferencedLocal(operation);
     }
 
     private void CheckOwnershipOutput(IInvocationOperation operation)

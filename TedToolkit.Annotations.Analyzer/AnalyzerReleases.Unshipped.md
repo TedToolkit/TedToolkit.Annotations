@@ -29,6 +29,5 @@ TTA201 | Performance | Info | Boxing conversion should be explicit
 TTA300 | Const | Error | Const contract is violated
 TTA301 | Const | Error | Const cannot annotate an out parameter
 TTA302 | Const | Error | Explicit.Const usage is invalid
-TTA303 | Const | Error | Const cannot annotate a static member
 TTA304 | Const | Error | Source method requires a compatible Const contract
 TTA305 | Const | Info | External method has no compatible Const contract

@@ -77,6 +77,7 @@ internal sealed class ConstOperationWalker(
         }
 
         Visit(operation.Target);
+        AnalyzePropertyAccessorContract(operation.Target, isSetter: true);
         AnalyzeMutationTarget(operation.Target);
         Visit(operation.Value);
         UpdateLocalAlias(operation);
@@ -86,6 +87,8 @@ internal sealed class ConstOperationWalker(
     public override void VisitCompoundAssignment(ICompoundAssignmentOperation operation)
     {
         base.VisitCompoundAssignment(operation);
+        AnalyzePropertyAccessorContract(operation.Target, isSetter: false);
+        AnalyzePropertyAccessorContract(operation.Target, isSetter: true);
         AnalyzeMutationTarget(operation.Target);
     }
 
@@ -93,6 +96,8 @@ internal sealed class ConstOperationWalker(
     public override void VisitCoalesceAssignment(ICoalesceAssignmentOperation operation)
     {
         base.VisitCoalesceAssignment(operation);
+        AnalyzePropertyAccessorContract(operation.Target, isSetter: false);
+        AnalyzePropertyAccessorContract(operation.Target, isSetter: true);
         AnalyzeMutationTarget(operation.Target);
     }
 
@@ -108,7 +113,29 @@ internal sealed class ConstOperationWalker(
     public override void VisitIncrementOrDecrement(IIncrementOrDecrementOperation operation)
     {
         base.VisitIncrementOrDecrement(operation);
+        AnalyzePropertyAccessorContract(operation.Target, isSetter: false);
+        AnalyzePropertyAccessorContract(operation.Target, isSetter: true);
         AnalyzeMutationTarget(operation.Target);
+    }
+
+    /// <inheritdoc />
+    public override void VisitPropertyReference(IPropertyReferenceOperation operation)
+    {
+        base.VisitPropertyReference(operation);
+        if (operation.Parent is IAssignmentOperation { Target: var target, }
+            && ReferenceEquals(target, operation))
+        {
+            return;
+        }
+
+        AnalyzePropertyAccessorContract(operation, isSetter: false);
+    }
+
+    /// <inheritdoc />
+    public override void VisitAddressOf(IAddressOfOperation operation)
+    {
+        base.VisitAddressOf(operation);
+        AnalyzeMutationTarget(operation.Reference);
     }
 
     /// <inheritdoc />
@@ -152,6 +179,7 @@ internal sealed class ConstOperationWalker(
             return;
         }
 
+        AnalyzeUnsafeReadOnlyReferences(operation);
         AnalyzeInvocationContracts(operation);
     }
 
@@ -201,6 +229,18 @@ internal sealed class ConstOperationWalker(
         }
     }
 
+    private bool IsProtectedMutationTarget(IOperation target)
+    {
+        var mutationTargets = target is ILocalReferenceOperation { Local.RefKind: RefKind.None, } localReference
+            ? ImmutableArray.Create(new ConstMutationTarget(localReference.Local, 0))
+            : ResolveTargets(target);
+        return mutationTargets.Any(mutationTarget =>
+            !mutationTarget.RequiresReferenceBoundary
+            && mutationTarget.Depth < 32
+            && TryGetProtectedDepths(mutationTarget.Symbol, out var protectedDepths)
+            && (protectedDepths & (1U << mutationTarget.Depth)) != 0);
+    }
+
     private void AnalyzeInvocationContracts(IInvocationOperation invocation)
     {
         if (invocation.TargetMethod.MethodKind == MethodKind.DelegateInvoke)
@@ -215,6 +255,10 @@ internal sealed class ConstOperationWalker(
                 instance,
                 invocation.Syntax.GetLocation(),
                 isReceiver: true);
+        }
+        else if (invocation.TargetMethod.IsStatic && IsStaticMemberOfOwningType(invocation.TargetMethod))
+        {
+            AnalyzeStaticStateCallContract(invocation.TargetMethod, invocation.Syntax.GetLocation());
         }
 
         foreach (var argument in invocation.Arguments)
@@ -234,6 +278,21 @@ internal sealed class ConstOperationWalker(
         }
     }
 
+    private void AnalyzeUnsafeReadOnlyReferences(IInvocationOperation invocation)
+    {
+        var isUnsafeApi = invocation.TargetMethod.ContainingType.ToDisplayString()
+            == "System.Runtime.CompilerServices.Unsafe";
+        if (!isUnsafeApi && !invocation.TargetMethod.IsExtern)
+        {
+            return;
+        }
+
+        foreach (var argument in invocation.Arguments.Where(argument => argument.Parameter?.RefKind == RefKind.In))
+        {
+            AnalyzeMutationTarget(argument.Value);
+        }
+    }
+
     private void AnalyzeCallContract(
         ISymbol calledContract,
         IOperation value,
@@ -242,9 +301,7 @@ internal sealed class ConstOperationWalker(
         IMethodSymbol? calledMethod = null)
     {
         calledMethod ??= (IMethodSymbol)calledContract;
-        var availableDepths = ConstContractResolver.TryGetConstDepths(calledContract, out var resolvedDepths)
-            ? resolvedDepths
-            : 0;
+        var availableDepths = GetAvailableDepths(calledContract);
 
         foreach (var target in ResolveTargets(value))
         {
@@ -253,7 +310,11 @@ internal sealed class ConstOperationWalker(
                 continue;
             }
 
-            var requiredDepths = GetRequiredCallDepths(protectedDepths, target, isReceiver);
+            var requiredDepths = GetRequiredCallDepths(
+                protectedDepths,
+                target,
+                isReceiver,
+                UnwrapConversion(value) is IInstanceReferenceOperation);
             if (requiredDepths == 0 || (availableDepths & requiredDepths) == requiredDepths)
             {
                 continue;
@@ -270,12 +331,66 @@ internal sealed class ConstOperationWalker(
         }
     }
 
+    private void AnalyzePropertyAccessorContract(IOperation operation, bool isSetter)
+    {
+        if (UnwrapConversion(operation) is not IPropertyReferenceOperation propertyReference
+            || (isSetter ? propertyReference.Property.SetMethod : propertyReference.Property.GetMethod) is not { } accessor)
+        {
+            return;
+        }
+
+        if (isSetter && IsProtectedMutationTarget(propertyReference))
+        {
+            return;
+        }
+
+        var location = propertyReference.Syntax.GetLocation();
+        if (propertyReference.Instance is { } instance)
+        {
+            AnalyzeCallContract(accessor, instance, location, isReceiver: true);
+        }
+        else if (propertyReference.Property.IsStatic && IsStaticMemberOfOwningType(propertyReference.Property))
+        {
+            AnalyzeStaticStateCallContract(accessor, location);
+        }
+    }
+
+    private void AnalyzeStaticStateCallContract(IMethodSymbol calledMethod, Location location)
+    {
+        if (!TryGetProtectedDepths(owningSymbol, out var requiredDepths)
+            || requiredDepths == 0
+            || (GetAvailableDepths(calledMethod) & requiredDepths) == requiredDepths)
+        {
+            return;
+        }
+
+        var descriptor = calledMethod.Locations.Any(candidate => candidate.IsInSource)
+            ? ConstMutationAnalyzer.SourceCallRequiresConst
+            : ConstMutationAnalyzer.ExternalCallRequiresConst;
+        reportDiagnostic?.Invoke(Diagnostic.Create(
+            descriptor,
+            location,
+            calledMethod.Name,
+            owningSymbol.Name));
+    }
+
+    private static uint GetAvailableDepths(ISymbol calledContract)
+    {
+        if (TryGetAccessorDepths(calledContract, out var accessorDepths))
+        {
+            return accessorDepths;
+        }
+
+        return ConstContractResolver.TryGetConstDepths(calledContract, out var resolvedDepths) ? resolvedDepths : 0;
+    }
+
     private static uint GetRequiredCallDepths(
         uint protectedDepths,
         in ConstMutationTarget target,
-        bool isReceiver)
+        bool isReceiver,
+        bool isOwningStateRoot)
     {
-        var shift = target.Depth + (isReceiver ? 1 : 0);
+        var shift = target.Depth + (isReceiver && !isOwningStateRoot ? 1 : 0);
         if (shift >= 32)
         {
             return 0;
@@ -391,6 +506,18 @@ internal sealed class ConstOperationWalker(
                     crossedReferenceBoundary || arrayElement.ArrayReference.Type?.IsReferenceType == true,
                     visitedLocals);
 
+            case IPropertyReferenceOperation { Property.IsStatic: true, } propertyReference
+                when IsStaticMemberOfOwningType(propertyReference.Property):
+                return ImmutableArray.Create(new ConstMutationTarget(owningSymbol, depth));
+
+            case IFieldReferenceOperation { Field.IsStatic: true, } fieldReference
+                when IsStaticMemberOfOwningType(fieldReference.Field):
+                return ImmutableArray.Create(new ConstMutationTarget(owningSymbol, depth));
+
+            case IEventReferenceOperation { Event.IsStatic: true, } eventReference
+                when IsStaticMemberOfOwningType(eventReference.Event):
+                return ImmutableArray.Create(new ConstMutationTarget(owningSymbol, depth));
+
             case IPropertyReferenceOperation propertyReference when propertyReference.Instance is not null:
                 return ResolveTargets(
                     propertyReference.Instance,
@@ -456,6 +583,12 @@ internal sealed class ConstOperationWalker(
             default:
                 return ImmutableArray<ConstMutationTarget>.Empty;
         }
+    }
+
+    private bool IsStaticMemberOfOwningType(ISymbol member)
+    {
+        return owningSymbol.IsStatic
+               && SymbolEqualityComparer.Default.Equals(member.ContainingType, owningSymbol.ContainingType);
     }
 
     private ImmutableArray<ConstMutationTarget> ResolveLocal(

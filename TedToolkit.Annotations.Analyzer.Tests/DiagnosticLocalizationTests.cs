@@ -51,7 +51,6 @@ internal sealed class DiagnosticLocalizationTests
     [Arguments("TTA300", "违反了 Const 契约")]
     [Arguments("TTA301", "Const 不能标注 out 参数")]
     [Arguments("TTA302", "Explicit.Const 用法无效")]
-    [Arguments("TTA303", "Const 不能标注静态成员")]
     [Arguments("TTA304", "源码方法需要兼容的 Const 契约")]
     [Arguments("TTA305", "外部方法没有兼容的 Const 契约")]
     public async Task Should_localize_diagnostic_title_when_chinese_is_requested(string diagnosticId, string expectedTitle)

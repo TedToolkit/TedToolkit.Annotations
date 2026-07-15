@@ -188,7 +188,6 @@ internal static class ConstDataFlowAnalysis
             IConstructorBodyOperation constructorBody => ControlFlowGraph.Create(constructorBody, cancellationToken),
             IFieldInitializerOperation fieldInitializer => ControlFlowGraph.Create(fieldInitializer, cancellationToken),
             IPropertyInitializerOperation propertyInitializer => ControlFlowGraph.Create(propertyInitializer, cancellationToken),
-            IParameterInitializerOperation parameterInitializer => ControlFlowGraph.Create(parameterInitializer, cancellationToken),
             _ => null,
         };
     }

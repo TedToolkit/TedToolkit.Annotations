@@ -23,6 +23,15 @@ namespace TedToolkit.Annotations.Documentations;
 /// fields and properties; and each following depth adds one member access.
 /// </para>
 /// <para>
+/// Applied to a static method or property, depths are relative to the static state of its declaring type.
+/// <see cref="ConstDepth.DEPTH0"/> protects its direct static fields and properties, and each following depth
+/// protects one further member access.
+/// </para>
+/// <para>
+/// Applied to a type, this contract supplies the default for its static members. A static member with an explicit
+/// <see cref="ConstAttribute"/> overrides the type-level default.
+/// </para>
+/// <para>
 /// Applied to a property, this contract applies to both accessors unless an accessor has its own
 /// <see cref="ConstAttribute"/>. Without an explicit contract, a getter protects all depths and a setter protects
 /// <see cref="ConstDepth.DEPTH1_OR_GREATER"/>. Therefore, a setter can write any direct field or property of the
@@ -33,9 +42,9 @@ namespace TedToolkit.Annotations.Documentations;
 /// to protect a depth and every deeper depth. The bundled analyzer reports writes to protected depths and requires
 /// compatible const contracts when protected receivers or values are passed to methods. Incompatible source calls
 /// are errors; unverifiable external calls are informational diagnostics. Do not apply this attribute to an
-/// <see langword="out"/> parameter because its value originates in the method rather than with the caller. Do not
-/// apply it to a static method or property because a static member has no instance receiver. Overrides and interface
-/// implementations combine const contracts declared by their base or interface members and parameters.
+/// <see langword="out"/> parameter because its value originates in the method rather than with the caller. Static
+/// members may also be annotated. Overrides and interface implementations combine const contracts
+/// declared by their base or interface members and parameters.
 /// </para>
 /// </remarks>
 /// <example>
@@ -48,7 +57,9 @@ namespace TedToolkit.Annotations.Documentations;
 /// }
 /// </code>
 /// </example>
-[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Parameter, Inherited = false)]
+[AttributeUsage(
+    AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Parameter,
+    Inherited = false)]
 public sealed class ConstAttribute(ConstDepth depths = ConstDepth.ALL) : DocumentationAttribute
 {
     /// <summary>

@@ -5,8 +5,6 @@
 // </copyright>
 // -----------------------------------------------------------------------
 
-using System.Globalization;
-
 namespace TedToolkit.Annotations.Analyzer.Tests.Const;
 
 /// <summary>
@@ -104,54 +102,6 @@ internal sealed class ConstStaticContractTests
             ConstMutationAnalyzer.SOURCE_CALL_DIAGNOSTIC_ID,
             ConstMutationAnalyzer.SOURCE_CALL_DIAGNOSTIC_ID,
         ]);
-    }
-
-    /// <summary>
-    /// 验证类型级 Const 为静态成员提供默认契约且允许成员显式覆盖。
-    /// </summary>
-    /// <returns>A task that represents the asynchronous test operation.</returns>
-    [Test]
-    public async Task Should_apply_type_contract_as_static_member_default_and_allow_override()
-    {
-        var diagnostics = await ConstAnalyzerTestHelper.AnalyzeAsync("""
-            using TedToolkit.Annotations.Const;
-
-            sealed class Node { public int Value; }
-
-            [Const(ConstDepth.DEPTH1)]
-            static class Sample
-            {
-                private static int _value;
-                private static Node _node = new();
-
-                internal static void UseDefault()
-                {
-                    _value = 1;
-                    _node.Value = 1;
-                }
-
-                [Const(ConstDepth.DEPTH0)]
-                internal static void UseOverride()
-                {
-                    _value = 2;
-                    _node.Value = 2;
-                }
-            }
-            """).ConfigureAwait(false);
-
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
-        [
-            ConstMutationAnalyzer.DIAGNOSTIC_ID,
-            ConstMutationAnalyzer.DIAGNOSTIC_ID,
-        ]);
-        await Assert.That(
-            diagnostics.Any(
-                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
-                    .Contains("depth 0", StringComparison.Ordinal))).IsTrue();
-        await Assert.That(
-            diagnostics.Any(
-                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
-                    .Contains("depth 1", StringComparison.Ordinal))).IsTrue();
     }
 
     /// <summary>

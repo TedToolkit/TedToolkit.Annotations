@@ -12,6 +12,6 @@ namespace TedToolkit.Annotations.Documentations;
 /// </summary>
 /// <typeparam name="TException">The exception thrown when the condition is not met.</typeparam>
 /// <param name="description">The required condition.</param>
-public sealed class PreconditionAttribute<TException>(string description)
+public class PreconditionAttribute<TException>(string description)
     : PreconditionAttribute(description, typeof(TException))
     where TException : Exception;

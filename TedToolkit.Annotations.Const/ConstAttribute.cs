@@ -28,10 +28,6 @@ namespace TedToolkit.Annotations.Const;
 /// protects one further member access.
 /// </para>
 /// <para>
-/// Applied to a type, this contract supplies the default for its static members. A static member with an explicit
-/// <see cref="ConstAttribute"/> overrides the type-level default.
-/// </para>
-/// <para>
 /// Applied to a property, this contract applies to both accessors unless an accessor has its own
 /// <see cref="ConstAttribute"/>. Without an explicit contract, a getter protects all depths and a setter protects
 /// <see cref="ConstDepth.DEPTH1_OR_GREATER"/>. Therefore, a setter can write any direct field or property of the
@@ -58,7 +54,7 @@ namespace TedToolkit.Annotations.Const;
 /// </code>
 /// </example>
 [AttributeUsage(
-    AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Parameter,
+    AttributeTargets.Method | AttributeTargets.Property | AttributeTargets.Parameter,
     Inherited = false)]
 public sealed class ConstAttribute(ConstDepth depths = ConstDepth.ALL) : Attribute
 {

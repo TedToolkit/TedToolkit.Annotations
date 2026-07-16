@@ -1,3 +1,42 @@
 # TedToolkit.Annotations.Boxing
 
-Helpers for making boxing allocations explicit.
+Make intentional value-type boxing visible in C# source. The package includes an analyzer that reports implicit boxing conversions and offers a code fix.
+
+## Install
+
+```shell
+dotnet add package TedToolkit.Annotations.Boxing
+```
+
+No separate analyzer package or configuration is required.
+
+## Use
+
+Replace an implicit conversion with `Boxer.Box` when allocating a boxed value is intentional:
+
+```csharp
+using TedToolkit.Annotations.Boxing;
+
+int count = 42;
+object value = Boxer.Box(count);
+IComparable comparable = Boxer.Box<IComparable, int>(count);
+```
+
+Nullable values preserve their null state:
+
+```csharp
+int? count = GetCountOrNull();
+object? value = Boxer.Box(count);
+```
+
+The call returns the same value represented as an object; it does not avoid the allocation. Its purpose is to make that allocation explicit to readers and the analyzer.
+
+## When to use it
+
+Use `Boxer.Box` at a boundary that requires a reference type—such as a non-generic API, an interface conversion, or a heterogeneous collection—when the resulting boxing allocation is intentional and acceptable. Do not use it merely to silence a diagnostic: prefer a generic API or another allocation-free design when boxing is avoidable.
+
+This package has no public annotation attributes; its public contract is the `Boxer.Box` API.
+
+## License
+
+Licensed under the [GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.html).

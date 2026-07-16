@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="AssumptionAttribute.cs" company="TedToolkit">
+// <copyright file="PostconditionAttribute.cs" company="TedToolkit">
 // Copyright (c) TedToolkit. All rights reserved.
 // Licensed under the LGPL-3.0 license. See COPYING, COPYING.LESSER file in the project root for full license information.
 // </copyright>
@@ -8,22 +8,20 @@
 namespace TedToolkit.Annotations.Documentations;
 
 /// <summary>
-/// Documents an external fact or convention the annotated code relies on but does not verify.
+/// Documents a condition guaranteed after the annotated member completes successfully.
 /// </summary>
-/// <param name="description">The assumption the code relies on.</param>
+/// <param name="description">The guaranteed condition.</param>
 [AttributeUsage(
-    AttributeTargets.Class
-    | AttributeTargets.Struct
-    | AttributeTargets.Interface
-    | AttributeTargets.Method
+    AttributeTargets.Method
     | AttributeTargets.Constructor
-    | AttributeTargets.Property,
+    | AttributeTargets.Parameter
+    | AttributeTargets.ReturnValue,
     AllowMultiple = true,
     Inherited = false)]
-public sealed class AssumptionAttribute(string description) : DocumentationAttribute
+public class PostconditionAttribute(string description) : ContractAttribute
 {
     /// <summary>
-    /// Gets the assumption the code relies on.
+    /// Gets the guaranteed condition.
     /// </summary>
     public string Description { get; } = description;
 }

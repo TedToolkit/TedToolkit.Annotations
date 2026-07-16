@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="PostconditionAttribute.cs" company="TedToolkit">
+// <copyright file="InvariantAttribute.cs" company="TedToolkit">
 // Copyright (c) TedToolkit. All rights reserved.
 // Licensed under the LGPL-3.0 license. See COPYING, COPYING.LESSER file in the project root for full license information.
 // </copyright>
@@ -8,20 +8,19 @@
 namespace TedToolkit.Annotations.Documentations;
 
 /// <summary>
-/// Documents a condition guaranteed after the annotated member completes successfully.
+/// Documents a condition that must remain true for the annotated type.
 /// </summary>
-/// <param name="description">The guaranteed condition.</param>
+/// <param name="description">The invariant.</param>
 [AttributeUsage(
-    AttributeTargets.Method
-    | AttributeTargets.Constructor
-    | AttributeTargets.Parameter
-    | AttributeTargets.ReturnValue,
-    AllowMultiple = true,
-    Inherited = false)]
-public sealed class PostconditionAttribute(string description) : DocumentationAttribute
+    AttributeTargets.Class
+    | AttributeTargets.Struct
+    | AttributeTargets.Interface
+    | AttributeTargets.Property,
+    AllowMultiple = true)]
+public class InvariantAttribute(string description) : ContractAttribute
 {
     /// <summary>
-    /// Gets the guaranteed condition.
+    /// Gets the invariant.
     /// </summary>
     public string Description { get; } = description;
 }

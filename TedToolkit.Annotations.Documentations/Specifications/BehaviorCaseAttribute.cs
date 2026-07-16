@@ -26,7 +26,7 @@ public class BehaviorCaseAttribute(
     string condition,
     string expected,
     bool hasUnitTest = false,
-    Type? exceptionType = null) : DocumentationAttribute
+    Type? exceptionType = null) : SpecificationAttribute
 {
     /// <summary>
     /// Gets the condition under which this behavior applies.

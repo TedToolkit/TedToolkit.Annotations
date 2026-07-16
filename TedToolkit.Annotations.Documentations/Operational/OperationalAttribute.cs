@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="IdempotentAttribute.cs" company="TedToolkit">
+// <copyright file="OperationalAttribute.cs" company="TedToolkit">
 // Copyright (c) TedToolkit. All rights reserved.
 // Licensed under the LGPL-3.0 license. See COPYING, COPYING.LESSER file in the project root for full license information.
 // </copyright>
@@ -8,7 +8,6 @@
 namespace TedToolkit.Annotations.Documentations;
 
 /// <summary>
-/// Documents that repeating the annotated operation has no additional observable effect.
+/// Provides a common base type for annotations that describe an API's execution characteristics.
 /// </summary>
-[AttributeUsage(AttributeTargets.Method, Inherited = false)]
-public sealed class IdempotentAttribute : DocumentationAttribute;
+public abstract class OperationalAttribute : DocumentationAttribute;

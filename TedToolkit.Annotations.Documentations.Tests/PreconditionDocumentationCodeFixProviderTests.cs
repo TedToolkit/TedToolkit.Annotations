@@ -136,6 +136,33 @@ internal sealed class PreconditionDocumentationCodeFixProviderTests
         await Assert.That(diagnostics.Where(candidate => candidate.Id == PreconditionDocumentationAnalyzer.DIAGNOSTIC_ID)).IsEmpty();
     }
 
+    /// <summary>
+    /// 验证带显式异常类型的生成断言前置条件会生成异常文档。
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
+    [Test]
+    public async Task Should_generate_exception_documentation_when_assertion_precondition_is_declaredAsync()
+    {
+        var updatedSource = await ApplyFixAsync("""
+            using System;
+            using TedToolkit.Annotations.Assertions;
+
+            sealed class BePositivePreconditionAttribute<TException> : AssertionPreconditionAttribute
+                where TException : Exception
+            {
+                public BePositivePreconditionAttribute() : base("Must satisfy BePositive.", typeof(TException)) { }
+            }
+
+            sealed class Sample
+            {
+                void Execute([BePositivePrecondition<ArgumentOutOfRangeException>] int value) { }
+            }
+            """).ConfigureAwait(false);
+
+        await Assert.That(updatedSource).Contains("<exception cref=\"global::System.ArgumentOutOfRangeException\">");
+        await Assert.That(updatedSource).Contains("<paramref name=\"value\"/> Must satisfy BePositive.");
+    }
+
     private static async Task<string> ApplyFixAsync(string source)
     {
         using var workspace = new AdhocWorkspace();
@@ -200,7 +227,13 @@ internal sealed class PreconditionDocumentationCodeFixProviderTests
             .Split(Path.PathSeparator)
             .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path))
             .Append(MetadataReference.CreateFromFile(typeof(PreconditionAttribute).Assembly.Location))
+            .Append(MetadataReference.CreateFromFile(GetAssertionPreconditionAssemblyPath()))
             .ToImmutableArray();
+    }
+
+    private static string GetAssertionPreconditionAssemblyPath()
+    {
+        return typeof(TedToolkit.Annotations.Assertions.AssertionPreconditionAttribute).Assembly.Location;
     }
 
     private static int CountOccurrences(string text, string value)

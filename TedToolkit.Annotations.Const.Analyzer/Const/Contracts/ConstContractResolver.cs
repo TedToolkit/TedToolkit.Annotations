@@ -29,7 +29,7 @@ internal static class ConstContractResolver
     /// Reports const attributes applied to out parameters.
     /// </summary>
     /// <param name="context">The symbol analysis context.</param>
-    internal static void AnalyzeParameter(SymbolAnalysisContext context)
+    internal static void AnalyzeParameter(in SymbolAnalysisContext context)
     {
         var parameter = (IParameterSymbol)context.Symbol;
         var attribute = GetDirectConstAttribute(parameter);

@@ -119,7 +119,7 @@ internal static class OwnedMemberLifetimeAnalysis
             }
         }
 
-        internal void Analyze(OperationBlockAnalysisContext context)
+        internal void Analyze(in OperationBlockAnalysisContext context)
         {
             if (context.OwningSymbol is not IMethodSymbol method)
             {

@@ -93,7 +93,7 @@ internal sealed class DisposableContract
     /// Determines whether a type supports asynchronous disposal.
     /// </summary>
     /// <param name="type">The type to inspect.</param>
-    /// <returns><see langword="true"/> when the type implements <see cref="IAsyncDisposable"/>.</returns>
+    /// <returns><see langword="true"/> when the type implements <c>IAsyncDisposable</c>.</returns>
     internal bool IsAsynchronouslyDisposable(ITypeSymbol type)
     {
         return Implements(type, AsyncDisposableType);

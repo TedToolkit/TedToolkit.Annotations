@@ -49,6 +49,14 @@ These attributes are always available in source. Define `ANNOTATIONS_MAINTENANCE
 </PropertyGroup>
 ```
 
+## Compatibility
+
+Targets .NET 6.0 through .NET 10.0, .NET Framework 4.7.2 and 4.8, and .NET Standard 2.0 and 2.1.
+
+## Related documentation
+
+- [Repository overview](../README.md)
+
 ## License
 
-Licensed under the [GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.html).
+Licensed under the [GNU Lesser General Public License v3.0](../COPYING.LESSER).

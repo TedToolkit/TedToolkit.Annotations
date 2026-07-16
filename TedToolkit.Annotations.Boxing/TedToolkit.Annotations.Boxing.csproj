@@ -8,8 +8,9 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\TedToolkit.Annotations.Boxing.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Boxing.Analyzer.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false"/>
+    <None Include="..\TedToolkit.Annotations.Boxing.CodeFixes\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Boxing.CodeFixes.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false"/>
   </ItemGroup>
   <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'">
-    <MSBuild Projects="..\TedToolkit.Annotations.Boxing.Analyzer\TedToolkit.Annotations.Boxing.Analyzer.csproj" Targets="Build" Properties="Configuration=$(Configuration)"/>
+    <MSBuild Projects="..\TedToolkit.Annotations.Boxing.CodeFixes\TedToolkit.Annotations.Boxing.CodeFixes.csproj" Targets="Build" Properties="Configuration=$(Configuration)"/>
   </Target>
 </Project>

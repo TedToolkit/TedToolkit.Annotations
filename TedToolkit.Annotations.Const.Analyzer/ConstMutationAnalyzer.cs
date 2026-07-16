@@ -107,7 +107,9 @@ public sealed class ConstMutationAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        context.RegisterSymbolAction(ConstContractResolver.AnalyzeParameter, SymbolKind.Parameter);
-        context.RegisterOperationBlockAction(ConstDataFlowAnalysis.Analyze);
+        context.RegisterSymbolAction(
+            symbolContext => ConstContractResolver.AnalyzeParameter(in symbolContext),
+            SymbolKind.Parameter);
+        context.RegisterOperationBlockAction(blockContext => ConstDataFlowAnalysis.Analyze(in blockContext));
     }
 }

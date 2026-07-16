@@ -1,67 +1,45 @@
 # TedToolkit.Annotations
 
-TedToolkit.Annotations is a .NET annotation library with a bundled Roslyn analyzer. It makes behavioral contracts, resource ownership, intentional boxing, and planned maintenance visible in C# source without introducing application logic.
+`TedToolkit.Annotations` provides focused .NET packages for making contracts, resource lifetime, intentional boxing, and maintenance intent explicit in C# source. Each package ships its relevant Roslyn analyzer and code fixes; install only the contract you need.
 
-## Packages and projects
+## Choose a package
 
-| Project | Purpose |
+| I want to... | Package |
 | --- | --- |
-| [`TedToolkit.Annotations`](TedToolkit.Annotations/README.md) | Public attributes and the `Explicit` marker API. This is the NuGet package consumed by applications and libraries. |
-| [`TedToolkit.Annotations.Analyzer`](TedToolkit.Annotations.Analyzer/README.md) | Roslyn analyzers and code fixes bundled into the annotations package. |
-| `TedToolkit.Annotations.Analyzer.Tests` | TUnit regression and behavior tests for the analyzers and code fixes. |
+| Generate precondition attributes from `TedToolkit.Assertions` assertions | [`TedToolkit.Annotations.Assertions`](TedToolkit.Annotations.Assertions/README.md) |
+| Make intentional boxing allocations explicit | [`TedToolkit.Annotations.Boxing`](TedToolkit.Annotations.Boxing/README.md) |
+| Declare and enforce non-mutation contracts | [`TedToolkit.Annotations.Const`](TedToolkit.Annotations.Const/README.md) |
+| Document API contracts, specifications, and design rationale | [`TedToolkit.Annotations.Documentations`](TedToolkit.Annotations.Documentations/README.md) |
+| Mark workarounds, temporary implementations, and technical debt | [`TedToolkit.Annotations.Maintenance`](TedToolkit.Annotations.Maintenance/README.md) |
+| Document disposable ownership and callback lifetime | [`TedToolkit.Annotations.Ownership`](TedToolkit.Annotations.Ownership/README.md) |
 
-## Installation
+## Quick start
+
+Install the package for the contract you want to express. For example, to make a boxing allocation explicit:
 
 ```shell
-dotnet add package TedToolkit.Annotations
+dotnet add package TedToolkit.Annotations.Boxing
 ```
 
-The package adds both the attributes and its analyzer. No separate analyzer package is required.
-
-## What it provides
-
-- **Disposable lifetime analysis** tracks ownership, disposal, transfers, aliases, callbacks, and owned members for `IDisposable` and `IAsyncDisposable` values.
-- **Const contracts** protect selected depths of an object graph from mutation and verify compatible contracts at method-call boundaries.
-- **Explicit boxing** makes allocation-producing boxing conversions visible through `Explicit.Box`; a code fix rewrites implicit boxing.
-- **Contract documentation** records preconditions, postconditions, invariants, assumptions, side effects, concurrency requirements, callback lifetime, and behavior cases.
-- **Maintenance annotations** identify workarounds, temporary implementations, technical debt, and cleanup requirements at their call sites.
-- **XML documentation generation** offers a code fix that derives `<exception>` entries from typed precondition annotations.
-
-See the [annotations guide](TedToolkit.Annotations/README.md) for API usage and the [analyzer guide](TedToolkit.Annotations.Analyzer/README.md) for the complete diagnostic catalog.
-
-## Conditional metadata
-
-Most documentation attributes are always emitted. Two high-volume, source-oriented groups are conditional:
-
-| Symbol | Metadata enabled |
-| --- | --- |
-| `ANNOTATIONS_MAINTENANCE` | Maintenance attributes such as `WorkaroundAttribute` and `TechnicalDebtAttribute`. |
-| `ANNOTATIONS_BEHAVIOR_CASE` | Individual `BehaviorCaseAttribute` scenarios. |
-
-Define a symbol only when reflection or downstream tooling needs that metadata:
-
-```xml
-<PropertyGroup>
-  <DefineConstants>$(DefineConstants);ANNOTATIONS_MAINTENANCE;ANNOTATIONS_BEHAVIOR_CASE</DefineConstants>
-</PropertyGroup>
+```csharp
+object value = Boxer.Box(42);
 ```
 
-The annotations remain in source when a symbol is absent.
+See the selected package README for its complete API and analyzer behavior.
 
-## Supported target frameworks
+## Compatibility
 
-- .NET 6.0 through .NET 10.0
-- .NET Framework 4.7.2 and 4.8
-- .NET Standard 2.0 and 2.1
+The packages target .NET 6.0 through .NET 10.0, .NET Framework 4.7.2 and 4.8, and .NET Standard 2.0 and 2.1. Bundled analyzers target .NET Standard 2.0 for Roslyn host compatibility.
 
-The analyzer targets .NET Standard 2.0 for Roslyn host compatibility.
+## Development
 
-## Build and test
+Build the solution in Release configuration:
 
 ```shell
 dotnet build TedToolkit.Annotations.slnx --configuration Release
-dotnet run --project TedToolkit.Annotations.Analyzer.Tests/TedToolkit.Annotations.Analyzer.Tests.csproj --configuration Release
 ```
+
+Each `*.Tests` project contains the corresponding TUnit test suite.
 
 ## License
 

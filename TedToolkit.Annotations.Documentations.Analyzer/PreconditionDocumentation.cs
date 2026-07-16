@@ -65,11 +65,13 @@ internal static class PreconditionDocumentation
     private static bool TryGetEntry(AttributeData attribute, string? parameterName, out Entry entry)
     {
         var attributeType = attribute.AttributeClass;
-        if (attributeType is null || attribute.ConstructorArguments.FirstOrDefault().Value is not string description)
+        if (attributeType is null)
         {
             entry = default;
             return false;
         }
+
+        var description = attribute.ConstructorArguments.FirstOrDefault().Value as string;
 
         ITypeSymbol? exceptionType = null;
         if (attributeType.ToDisplayString() == PRECONDITION_ATTRIBUTE_NAME && attribute.ConstructorArguments.Length > 1)
@@ -81,7 +83,13 @@ internal static class PreconditionDocumentation
             exceptionType = attributeType.TypeArguments[0];
         }
 
-        if (exceptionType is null)
+        if (description is null && TryGetGeneratedAssertionPrecondition(attribute, out var generatedEntry))
+        {
+            description = generatedEntry.Description;
+            exceptionType = generatedEntry.ExceptionType;
+        }
+
+        if (description is null || exceptionType is null)
         {
             entry = default;
             return false;
@@ -89,6 +97,64 @@ internal static class PreconditionDocumentation
 
         entry = new(exceptionType, parameterName, description);
         return true;
+    }
+
+    private static bool TryGetGeneratedAssertionPrecondition(
+        AttributeData attribute,
+        out (string Description, ITypeSymbol? ExceptionType) metadata)
+    {
+        const string suffix = "PreconditionAttribute";
+        if (attribute.AttributeClass is not { } attributeType
+            || !attributeType.Name.EndsWith(suffix, StringComparison.Ordinal)
+            || attributeType.Name.Length == suffix.Length
+            || !DerivesFromPrecondition(attributeType))
+        {
+            metadata = default;
+            return false;
+        }
+
+        var assertionName = attributeType.Name.Substring(0, attributeType.Name.Length - suffix.Length);
+        var exceptionType = GetGeneratedExceptionType(attribute);
+        metadata = ($"Must satisfy {assertionName}.", exceptionType);
+        return true;
+    }
+
+    private static ITypeSymbol? GetGeneratedExceptionType(AttributeData attribute)
+    {
+        var attributeType = attribute.AttributeClass!;
+        var exceptionTypeParameterIndex = attributeType.OriginalDefinition.TypeParameters
+            .Select(static (parameter, index) => (parameter, index))
+            .Where(static item => item.parameter.Name == "TException")
+            .Select(static item => item.index)
+            .DefaultIfEmpty(-1)
+            .First();
+        if (exceptionTypeParameterIndex >= 0)
+        {
+            return attributeType.TypeArguments[exceptionTypeParameterIndex];
+        }
+
+        var exceptionParameterIndex = attribute.AttributeConstructor?.Parameters
+            .Select(static (parameter, index) => (parameter, index))
+            .Where(static item => item.parameter.Name == "exceptionType")
+            .Select(static item => item.index)
+            .DefaultIfEmpty(-1)
+            .First() ?? -1;
+        return exceptionParameterIndex >= 0 && attribute.ConstructorArguments.Length > exceptionParameterIndex
+            ? attribute.ConstructorArguments[exceptionParameterIndex].Value as ITypeSymbol
+            : null;
+    }
+
+    private static bool DerivesFromPrecondition(INamedTypeSymbol attributeType)
+    {
+        for (var type = attributeType.BaseType; type is not null; type = type.BaseType)
+        {
+            if (type.OriginalDefinition.ToDisplayString() == PRECONDITION_ATTRIBUTE_NAME)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>

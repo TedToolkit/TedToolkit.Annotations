@@ -94,7 +94,7 @@ internal sealed class ConstAliasState
     /// </summary>
     /// <param name="captureId">The flow capture identifier.</param>
     /// <returns>The possible const mutation roots.</returns>
-    internal ImmutableArray<ConstMutationTarget> GetCapture(CaptureId captureId)
+    internal ImmutableArray<ConstMutationTarget> GetCapture(in CaptureId captureId)
     {
         return _captures.TryGetValue(captureId, out var targets) ? targets : ImmutableArray<ConstMutationTarget>.Empty;
     }
@@ -131,7 +131,7 @@ internal sealed class ConstAliasState
     /// </summary>
     /// <param name="captureId">The flow capture identifier.</param>
     /// <param name="targets">The possible const mutation roots.</param>
-    internal void SetCapture(CaptureId captureId, in ImmutableArray<ConstMutationTarget> targets)
+    internal void SetCapture(in CaptureId captureId, in ImmutableArray<ConstMutationTarget> targets)
     {
         if (targets.IsEmpty)
         {

@@ -44,6 +44,18 @@ var snapshot = AsConst.Local(order, ConstDepth.DEPTH1_OR_GREATER);
 
 Use the narrowest depth that expresses the contract. Do not annotate `out` parameters: their value is produced by the callee, not supplied by the caller.
 
+## Analyzer diagnostics
+
+The analyzer reports contract violations (`TAC300`), invalid `out`-parameter annotations (`TAC301`), invalid `AsConst.Local` usage (`TAC302`), and incompatible source call contracts (`TAC304`). It also identifies unverifiable external calls (`TAC305`).
+
+## Compatibility
+
+Targets .NET 6.0 through .NET 10.0, .NET Framework 4.7.2 and 4.8, and .NET Standard 2.0 and 2.1.
+
+## Related documentation
+
+- [Repository overview](../README.md)
+
 ## License
 
-Licensed under the [GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.html).
+Licensed under the [GNU Lesser General Public License v3.0](../COPYING.LESSER).

@@ -2,6 +2,7 @@
   <Folder Name="/SolutionItems/">
     <File Path=".github/workflows/build.yml" />
     <File Path=".gitignore" />
+    <File Path="CLAUDE.md" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
     <File Path="README.md" />
@@ -14,14 +15,21 @@
   <Project Path="TedToolkit.Annotations.Const/TedToolkit.Annotations.Const.csproj" />
   <Project Path="TedToolkit.Annotations.Boxing/TedToolkit.Annotations.Boxing.csproj" />
   <Project Path="TedToolkit.Annotations.Maintenance/TedToolkit.Annotations.Maintenance.csproj" />
+  <Project Path="TedToolkit.Annotations.Assertions/TedToolkit.Annotations.Assertions.csproj" />
   <Project Path="TedToolkit.Annotations.Documentations.Analyzer/TedToolkit.Annotations.Documentations.Analyzer.csproj" />
+  <Project Path="TedToolkit.Annotations.Documentations.CodeFixes/TedToolkit.Annotations.Documentations.CodeFixes.csproj" />
   <Project Path="TedToolkit.Annotations.Ownership.Analyzer/TedToolkit.Annotations.Ownership.Analyzer.csproj" />
   <Project Path="TedToolkit.Annotations.Const.Analyzer/TedToolkit.Annotations.Const.Analyzer.csproj" />
+  <Project Path="TedToolkit.Annotations.Const.CodeFixes/TedToolkit.Annotations.Const.CodeFixes.csproj" />
   <Project Path="TedToolkit.Annotations.Boxing.Analyzer/TedToolkit.Annotations.Boxing.Analyzer.csproj" />
+  <Project Path="TedToolkit.Annotations.Boxing.CodeFixes/TedToolkit.Annotations.Boxing.CodeFixes.csproj" />
   <Project Path="TedToolkit.Annotations.Maintenance.Analyzer/TedToolkit.Annotations.Maintenance.Analyzer.csproj" />
+  <Project Path="TedToolkit.Annotations.Assertions.Analyzer/TedToolkit.Annotations.Assertions.Analyzer.csproj" />
+  <Project Path="TedToolkit.Annotations.Assertions.CodeFixes/TedToolkit.Annotations.Assertions.CodeFixes.csproj" />
   <Project Path="TedToolkit.Annotations.Documentations.Tests/TedToolkit.Annotations.Documentations.Tests.csproj" />
   <Project Path="TedToolkit.Annotations.Ownership.Tests/TedToolkit.Annotations.Ownership.Tests.csproj" />
   <Project Path="TedToolkit.Annotations.Const.Tests/TedToolkit.Annotations.Const.Tests.csproj" />
   <Project Path="TedToolkit.Annotations.Boxing.Tests/TedToolkit.Annotations.Boxing.Tests.csproj" />
   <Project Path="TedToolkit.Annotations.Maintenance.Tests/TedToolkit.Annotations.Maintenance.Tests.csproj" />
+  <Project Path="TedToolkit.Annotations.Assertions.Tests/TedToolkit.Annotations.Assertions.Tests.csproj" />
 </Solution>

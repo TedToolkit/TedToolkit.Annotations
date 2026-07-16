@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\externals\TedToolkit\props\NugetPackage.props" />
+  <Import Project="..\externals\TedToolkit\props\AlmostAllFrameworks.props" />
+  <Import Project="..\externals\TedToolkit\props\CodeAnalysis.props" />
+  <PropertyGroup>
+    <Title>Ownership annotations</Title>
+    <Description>Ownership and callback-lifetime annotations for disposable resources.</Description>
+  </PropertyGroup>
+  <ItemGroup><None Include="..\TedToolkit.Annotations.Ownership.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Ownership.Analyzer.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" /></ItemGroup>
+  <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'"><MSBuild Projects="..\TedToolkit.Annotations.Ownership.Analyzer\TedToolkit.Annotations.Ownership.Analyzer.csproj" Targets="Build" Properties="Configuration=$(Configuration)" /></Target>
+</Project>

@@ -21,7 +21,11 @@ var pipeline = new TedPipeline(
         Solution = Solutions.TedToolkit_Annotations,
         TestFiles =
         [
-            Projects.TedToolkit_Annotations_Analyzer_Tests,
+            Projects.TedToolkit_Annotations_Documentations_Tests,
+            Projects.TedToolkit_Annotations_Ownership_Tests,
+            Projects.TedToolkit_Annotations_Const_Tests,
+            Projects.TedToolkit_Annotations_Boxing_Tests,
+            Projects.TedToolkit_Annotations_Maintenance_Tests,
         ],
     },
     new FileInfo(Path.Combine(Projects.Build.Directory!.FullName, "appsettings.json")));

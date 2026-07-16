@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\externals\TedToolkit\props\NugetPackage.props" />
+  <Import Project="..\externals\TedToolkit\props\AlmostAllFrameworks.props" />
+  <Import Project="..\externals\TedToolkit\props\CodeAnalysis.props" />
+  <PropertyGroup>
+    <Title>Const annotations</Title>
+    <Description>Object-graph immutability annotations.</Description>
+  </PropertyGroup>
+  <ItemGroup><None Include="..\TedToolkit.Annotations.Const.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Const.Analyzer.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" /></ItemGroup>
+  <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'"><MSBuild Projects="..\TedToolkit.Annotations.Const.Analyzer\TedToolkit.Annotations.Const.Analyzer.csproj" Targets="Build" Properties="Configuration=$(Configuration)" /></Target>
+</Project>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="TAO001Title" xml:space="preserve"><value>Disposable resource is disposed more than once</value></data>
+  <data name="TAO001Message" xml:space="preserve"><value>The disposable resource '{0}' is disposed more than once</value></data>
+  <data name="TAO002Title" xml:space="preserve"><value>Disposed resource is used</value></data>
+  <data name="TAO002Message" xml:space="preserve"><value>The disposable resource '{0}' is used after it was disposed</value></data>
+  <data name="TAO003Title" xml:space="preserve"><value>Transferred resource is used by the previous owner</value></data>
+  <data name="TAO003Message" xml:space="preserve"><value>The disposable resource '{0}' is used after its ownership was transferred</value></data>
+  <data name="TAO004Title" xml:space="preserve"><value>Locally owned disposable resource is not released</value></data>
+  <data name="TAO004Message" xml:space="preserve"><value>The disposable resource '{0}' is neither disposed nor transferred to another owner</value></data>
+  <data name="TAO005Title" xml:space="preserve"><value>Callback can outlive its captured resource</value></data>
+  <data name="TAO005Message" xml:space="preserve"><value>The {0} callback captures '{1}', whose lifetime can end before the callback runs</value></data>
+  <data name="CallbackLifetimeDeferred" xml:space="preserve"><value>deferred</value></data>
+  <data name="CallbackLifetimeSubscription" xml:space="preserve"><value>subscription</value></data>
+  <data name="TAO006Title" xml:space="preserve"><value>Disposable resource is borrowed</value></data>
+  <data name="TAO006Message" xml:space="preserve"><value>The disposable resource '{0}' is borrowed and must not be disposed by this caller</value></data>
+  <data name="TAO007Title" xml:space="preserve"><value>Disposed resource is returned</value></data>
+  <data name="TAO007Message" xml:space="preserve"><value>The disposable resource '{0}' is returned after it was disposed or scheduled for disposal</value></data>
+  <data name="TAO008Title" xml:space="preserve"><value>Owned disposable member requires a compatible disposal contract</value></data>
+  <data name="TAO008Message" xml:space="preserve"><value>The type '{0}' owns disposable member '{1}' but does not implement its required disposal contract</value></data>
+  <data name="TAO009Title" xml:space="preserve"><value>Owned disposable member is not released</value></data>
+  <data name="TAO009Message" xml:space="preserve"><value>The owned disposable member '{0}' is not disposed or transferred by the containing type's disposal method</value></data>
+  <data name="TAO010Title" xml:space="preserve"><value>Ownership target must carry a disposable resource</value></data>
+  <data name="TAO010Message" xml:space="preserve"><value>Ownership can be applied only to a disposable type or a type that structurally carries a disposable resource, but '{0}' does neither</value></data>
+  <data name="TAO011Title" xml:space="preserve"><value>Owned disposable resource is overwritten</value></data>
+  <data name="TAO011Message" xml:space="preserve"><value>The owned disposable resource '{0}' must be disposed or transferred before it is overwritten</value></data>
+  <data name="TAO012Title" xml:space="preserve"><value>Owned disposable property is overwritten</value></data>
+  <data name="TAO012Message" xml:space="preserve"><value>The owned disposable property '{0}' should be disposed or transferred before it is overwritten</value></data>
+  <data name="TAO013Title" xml:space="preserve"><value>Asynchronous disposal result is not observed</value></data>
+  <data name="TAO013Message" xml:space="preserve"><value>The result of asynchronously disposing resource '{0}' must be awaited or returned</value></data>
+  <data name="TAO014Title" xml:space="preserve"><value>Ownership contract is invalid</value></data>
+  <data name="TAO014Message" xml:space="preserve"><value>The ownership annotations on '{0}' conflict or specify an invalid flow</value></data>
+  <data name="TAM100Title" xml:space="preserve"><value>Workaround API is invoked</value></data>
+  <data name="TAM101Title" xml:space="preserve"><value>Temporary implementation is invoked</value></data>
+  <data name="TAM102Title" xml:space="preserve"><value>Technical-debt API is invoked</value></data>
+  <data name="TAM103Title" xml:space="preserve"><value>Cleanup-required API is invoked</value></data>
+  <data name="MaintenanceUsageMessage" xml:space="preserve"><value>The {0} '{1}' is invoked. Reason: {2}. {3}</value></data>
+  <data name="MaintenanceNoReasonSpecified" xml:space="preserve"><value>No reason was specified</value></data>
+  <data name="MaintenanceNoRemovalCondition" xml:space="preserve"><value>No removal condition is specified</value></data>
+  <data name="MaintenanceRemovalCondition" xml:space="preserve"><value>Remove when: {0}</value></data>
+  <data name="MaintenanceWorkaroundKind" xml:space="preserve"><value>workaround</value></data>
+  <data name="MaintenanceTemporaryImplementationKind" xml:space="preserve"><value>temporary implementation</value></data>
+  <data name="TechnicalDebtKindDesign" xml:space="preserve"><value>DESIGN technical-debt API</value></data>
+  <data name="TechnicalDebtKindCompatibility" xml:space="preserve"><value>COMPATIBILITY technical-debt API</value></data>
+  <data name="TechnicalDebtKindPerformance" xml:space="preserve"><value>PERFORMANCE technical-debt API</value></data>
+  <data name="TechnicalDebtKindReliability" xml:space="preserve"><value>RELIABILITY technical-debt API</value></data>
+  <data name="TechnicalDebtKindUnknown" xml:space="preserve"><value>UNKNOWN technical-debt API</value></data>
+  <data name="MaintenanceCleanupRequiredKind" xml:space="preserve"><value>cleanup-required API</value></data>
+  <data name="TAC300Title" xml:space="preserve"><value>Const contract is violated</value></data>
+  <data name="TAC300Message" xml:space="preserve"><value>Mutation at depth {0} violates the const contract on '{1}'</value></data>
+  <data name="TAC301Title" xml:space="preserve"><value>Const cannot annotate an out parameter</value></data>
+  <data name="TAC301Message" xml:space="preserve"><value>The const contract cannot be applied to out parameter '{0}'</value></data>
+  <data name="TAC302Title" xml:space="preserve"><value>Const.Local usage is invalid</value></data>
+  <data name="TAC302Message" xml:space="preserve"><value>Const.Local must directly initialize a local variable and use a compile-time constant depth mask</value></data>
+  <data name="TAC304Title" xml:space="preserve"><value>Source method requires a compatible Const contract</value></data>
+  <data name="TAC304Message" xml:space="preserve"><value>Calling source method '{0}' can violate the const contract on '{1}'; add a compatible Const contract</value></data>
+  <data name="TAC305Title" xml:space="preserve"><value>External method has no compatible Const contract</value></data>
+  <data name="TAC305Message" xml:space="preserve"><value>Calling external method '{0}' can violate the const contract on '{1}'; the external contract cannot be verified</value></data>
+  <data name="TAB201Title" xml:space="preserve"><value>Boxing conversion should be explicit</value></data>
+  <data name="TAB201Message" xml:space="preserve"><value>Boxing conversion from '{0}' to '{1}' should use Boxing.Box</value></data>
+  <data name="TAB201CodeFixTitle" xml:space="preserve"><value>Make boxing explicit with Boxing.Box</value></data>
+  <data name="PreconditionDocumentationTitle" xml:space="preserve"><value>Generate precondition exception documentation</value></data>
+  <data name="PreconditionDocumentationMessage" xml:space="preserve"><value>Precondition exceptions can be documented with XML exception elements.</value></data>
+  <data name="TAD202Title" xml:space="preserve"><value>Behavior case requires a unit test</value></data>
+  <data name="TAD202Message" xml:space="preserve"><value>This behavior case is not covered by a unit test.</value></data>
+  <data name="TAD202CodeFixTitle" xml:space="preserve"><value>Mark behavior case as covered by a unit test</value></data>
+</root>

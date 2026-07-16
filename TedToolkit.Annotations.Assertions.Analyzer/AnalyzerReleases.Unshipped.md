@@ -6,9 +6,4 @@
 
 Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
-TAC300 | Const | Error | Const contract is violated
-TAC301 | Const | Error | Const cannot annotate an out parameter
-TAC302 | Const | Error | Const.Local usage is invalid
-TAC303 | Const | Hidden | ConstContractInferenceAnalyzer
-TAC304 | Const | Error | Source method requires a compatible Const contract
-TAC305 | Const | Info | External method has no compatible Const contract
+TAA200 | Usage | Info | Declared assertion preconditions are not enforced

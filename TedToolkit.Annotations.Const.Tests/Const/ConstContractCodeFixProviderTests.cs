@@ -185,7 +185,7 @@ internal sealed class ConstContractCodeFixProviderTests
 
         var operations = await actions[0].GetOperationsAsync(CancellationToken.None).ConfigureAwait(false);
         var updatedDocument = operations.OfType<ApplyChangesOperation>().Single().ChangedSolution.GetDocument(documentId)!;
-        return (await updatedDocument.GetTextAsync().ConfigureAwait(false)).ToString();
+        return (await updatedDocument.GetTextAsync().ConfigureAwait(false)).ToString().ReplaceLineEndings("\n");
     }
 
     private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(Document document)

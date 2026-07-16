@@ -21,7 +21,7 @@ internal static class ConstDataFlowAnalysis
     /// Analyzes every operation block owned by a method or accessor.
     /// </summary>
     /// <param name="context">The operation-block analysis context.</param>
-    internal static void Analyze(OperationBlockAnalysisContext context)
+    internal static void Analyze(in OperationBlockAnalysisContext context)
     {
         foreach (var operationBlock in context.OperationBlocks)
         {

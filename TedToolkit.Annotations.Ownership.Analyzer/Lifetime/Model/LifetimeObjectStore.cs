@@ -155,7 +155,7 @@ internal sealed class LifetimeObjectStore
     /// </summary>
     /// <param name="id">The flow-capture identifier.</param>
     /// <param name="operation">The captured expression.</param>
-    internal void SetCaptureOrigin(CaptureId id, IOperation operation)
+    internal void SetCaptureOrigin(in CaptureId id, IOperation operation)
     {
         _captureOrigins[id] = Resolve(operation) ?? operation;
     }

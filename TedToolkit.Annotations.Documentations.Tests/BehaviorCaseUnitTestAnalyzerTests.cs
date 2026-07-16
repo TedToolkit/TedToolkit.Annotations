@@ -61,11 +61,34 @@ internal sealed class BehaviorCaseUnitTestAnalyzerTests
             {
                 [BehaviorCase("empty input", "Returns an empty result.", hasUnitTest: true)]
                 [BehaviorCase<ArgumentException>("invalid input", "Throws.", hasUnitTest: true)]
+                [BehaviorCase<ArgumentNullException>("name is null", hasUnitTest: true)]
                 void Execute() { }
             }
             """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
+    }
+
+    /// <summary>
+    /// 验证省略补充预期说明的异常行为用例仍会要求单元测试覆盖。
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
+    [Test]
+    public async Task Should_report_info_when_shortened_exception_behavior_case_has_no_unit_test()
+    {
+        var diagnostics = await AnalyzeAsync("""
+            using System;
+            using TedToolkit.Annotations.Documentations;
+
+            sealed class Sample
+            {
+                [BehaviorCase<ArgumentException>("invalid input")]
+                void Execute() { }
+            }
+            """).ConfigureAwait(false);
+
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id))
+            .IsEquivalentTo([BehaviorCaseUnitTestAnalyzer.DIAGNOSTIC_ID,]);
     }
 
     private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source)

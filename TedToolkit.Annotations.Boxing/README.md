@@ -31,12 +31,22 @@ object? value = Boxer.Box(count);
 
 The call returns the same value represented as an object; it does not avoid the allocation. Its purpose is to make that allocation explicit to readers and the analyzer.
 
+The bundled analyzer reports implicit boxing as `TAB201` (Info), and its code fix rewrites the conversion as the appropriate `Boxer.Box` call.
+
 ## When to use it
 
 Use `Boxer.Box` at a boundary that requires a reference type—such as a non-generic API, an interface conversion, or a heterogeneous collection—when the resulting boxing allocation is intentional and acceptable. Do not use it merely to silence a diagnostic: prefer a generic API or another allocation-free design when boxing is avoidable.
 
 This package has no public annotation attributes; its public contract is the `Boxer.Box` API.
 
+## Compatibility
+
+Targets .NET 6.0 through .NET 10.0, .NET Framework 4.7.2 and 4.8, and .NET Standard 2.0 and 2.1.
+
+## Related documentation
+
+- [Repository overview](../README.md)
+
 ## License
 
-Licensed under the [GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.html).
+Licensed under the [GNU Lesser General Public License v3.0](../COPYING.LESSER).

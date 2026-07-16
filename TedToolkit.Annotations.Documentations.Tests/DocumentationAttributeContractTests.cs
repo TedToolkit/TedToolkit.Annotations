@@ -84,6 +84,20 @@ internal sealed class DocumentationAttributeContractTests
     }
 
     /// <summary>
+    /// 验证异常类型足以描述结果时，行为用例可以省略补充预期说明。
+    /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
+    [Test]
+    public async Task Should_allow_omitting_expected_behavior_when_exception_type_is_specified()
+    {
+        var generic = new BehaviorCaseAttribute<ArgumentNullException>("name is null", hasUnitTest: true);
+
+        await Assert.That(generic.Expected).IsEmpty();
+        await Assert.That(generic.ExceptionType).IsEqualTo(typeof(ArgumentNullException));
+        await Assert.That(generic.HasUnitTest).IsTrue();
+    }
+
+    /// <summary>
     /// 验证状态转换和设计理由特性公开其结构化信息。
     /// </summary>
     /// <returns>A task that represents the asynchronous test operation.</returns>

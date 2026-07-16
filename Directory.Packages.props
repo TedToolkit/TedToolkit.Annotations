@@ -3,9 +3,13 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.3.0" />
-    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.3.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.0.0" />
+    <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="Sourcy.DotNet" Version="1.1.1" />
+    <PackageVersion Include="TedToolkit.Assertions" Version="2026.7.7" />
+    <PackageVersion Include="TedToolkit.RoslynHelper" Version="2026.7.15" />
     <PackageVersion Include="TUnit" Version="1.59.0" />
+    <PackageVersion Include="ZString" Version="2.6.0" />
   </ItemGroup>
 </Project>

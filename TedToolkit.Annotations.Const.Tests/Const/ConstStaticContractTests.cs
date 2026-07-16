@@ -134,7 +134,7 @@ internal sealed class ConstStaticContractTests
     }
 
     /// <summary>
-    /// 验证 Unsafe.AsRef 和 extern in 参数不能让受保护静态状态逃逸为可写引用。
+    /// 验证 Unsafe.AsRef 和 extern in 参数会报告受保护静态状态的直接逃逸。
     /// </summary>
     /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
@@ -162,7 +162,6 @@ internal sealed class ConstStaticContractTests
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
-            ConstMutationAnalyzer.DIAGNOSTIC_ID,
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
             ConstMutationAnalyzer.SOURCE_CALL_DIAGNOSTIC_ID,
         ]);

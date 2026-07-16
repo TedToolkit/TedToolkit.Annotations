@@ -6,6 +6,6 @@
     <Title>Const annotations</Title>
     <Description>Object-graph immutability annotations.</Description>
   </PropertyGroup>
-  <ItemGroup><None Include="..\TedToolkit.Annotations.Const.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Const.Analyzer.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" /></ItemGroup>
-  <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'"><MSBuild Projects="..\TedToolkit.Annotations.Const.Analyzer\TedToolkit.Annotations.Const.Analyzer.csproj" Targets="Build" Properties="Configuration=$(Configuration)" /></Target>
+  <ItemGroup><None Include="..\TedToolkit.Annotations.Const.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Const.Analyzer.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" /><None Include="..\TedToolkit.Annotations.Const.CodeFixes\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Const.CodeFixes.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" /></ItemGroup>
+  <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'"><MSBuild Projects="..\TedToolkit.Annotations.Const.CodeFixes\TedToolkit.Annotations.Const.CodeFixes.csproj" Targets="Build" Properties="Configuration=$(Configuration)" /></Target>
 </Project>

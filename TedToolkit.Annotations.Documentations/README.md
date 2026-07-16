@@ -49,6 +49,8 @@ The main groups are:
 
 Use the enum overloads, such as `SideEffectKind` and `MayBlockKind`, when a standard category applies; provide the description that tells callers the actual condition or effect.
 
+`Precondition<TException>` and `BehaviorCase<TException>` require `TException` to derive from `Exception`. The bundled code fix can generate XML `<exception>` documentation for typed preconditions.
+
 ## Conditional behavior cases
 
 `BehaviorCase` annotations are always usable in source, but are emitted into metadata only when `ANNOTATIONS_BEHAVIOR_CASE` is defined:
@@ -59,6 +61,15 @@ Use the enum overloads, such as `SideEffectKind` and `MayBlockKind`, when a stan
 </PropertyGroup>
 ```
 
+## Compatibility
+
+Targets .NET 6.0 through .NET 10.0, .NET Framework 4.7.2 and 4.8, and .NET Standard 2.0 and 2.1.
+
+## Related documentation
+
+- [Repository overview](../README.md)
+- [Assertion-backed preconditions](../TedToolkit.Annotations.Assertions/README.md)
+
 ## License
 
-Licensed under the [GNU Lesser General Public License v3.0](https://www.gnu.org/licenses/lgpl-3.0.html).
+Licensed under the [GNU Lesser General Public License v3.0](../COPYING.LESSER).

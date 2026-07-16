@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\externals\TedToolkit\props\NugetPackage.props" />
+  <Import Project="..\externals\TedToolkit\props\AlmostAllFrameworks.props" />
+  <Import Project="..\externals\TedToolkit\props\CodeAnalysis.props" />
+  <PropertyGroup>
+    <Title>Assertion precondition annotations</Title>
+    <Description>Source-generated precondition annotations backed by TedToolkit.Assertions.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TedToolkit.Annotations.Documentations\TedToolkit.Annotations.Documentations.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\TedToolkit.Annotations.Assertions.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Assertions.Analyzer.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" />
+    <None Include="..\TedToolkit.Annotations.Assertions.CodeFixes\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Assertions.CodeFixes.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" />
+    <None Include="..\TedToolkit.Annotations.Assertions.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.RoslynHelper.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" />
+    <None Include="..\TedToolkit.Annotations.Assertions.Analyzer\bin\$(Configuration)\netstandard2.0\ZString.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" />
+    <None Include="..\TedToolkit.Annotations.Assertions.Analyzer\bin\$(Configuration)\netstandard2.0\System.Memory.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="TedToolkit.Assertions" />
+  </ItemGroup>
+  <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'">
+    <MSBuild Projects="..\TedToolkit.Annotations.Assertions.CodeFixes\TedToolkit.Annotations.Assertions.CodeFixes.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
+  </Target>
+</Project>

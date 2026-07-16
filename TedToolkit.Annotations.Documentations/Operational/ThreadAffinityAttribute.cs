@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------
-// <copyright file="SideEffectAttribute.cs" company="TedToolkit">
+// <copyright file="ThreadAffinityAttribute.cs" company="TedToolkit">
 // Copyright (c) TedToolkit. All rights reserved.
 // Licensed under the LGPL-3.0 license. See COPYING, COPYING.LESSER file in the project root for full license information.
 // </copyright>
@@ -8,19 +8,22 @@
 namespace TedToolkit.Annotations.Documentations;
 
 /// <summary>
-/// Documents an observable state change caused by the annotated member.
+/// Documents the required thread or synchronization context for the annotated code.
 /// </summary>
-/// <param name="description">The observable state change.</param>
+/// <param name="description">The required thread or synchronization context.</param>
 [AttributeUsage(
-    AttributeTargets.Method
+    AttributeTargets.Class
+    | AttributeTargets.Struct
+    | AttributeTargets.Interface
+    | AttributeTargets.Method
     | AttributeTargets.Constructor
     | AttributeTargets.Property,
     AllowMultiple = true,
     Inherited = false)]
-public sealed class SideEffectAttribute(string description) : DocumentationAttribute
+public class ThreadAffinityAttribute(string description) : OperationalAttribute
 {
     /// <summary>
-    /// Gets the observable state change.
+    /// Gets the required thread or synchronization context.
     /// </summary>
     public string Description { get; } = description;
 }

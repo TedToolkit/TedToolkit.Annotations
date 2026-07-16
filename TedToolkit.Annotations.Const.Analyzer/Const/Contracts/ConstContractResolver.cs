@@ -70,8 +70,7 @@ internal static class ConstContractResolver
         }
 
         var found = TryGetDirectConstDepths(accessor, out var declaredDepths)
-                    || TryGetDirectConstDepths(property, out declaredDepths)
-                    || TryGetStaticTypeConstDepths(property, out declaredDepths);
+                    || TryGetDirectConstDepths(property, out declaredDepths);
         depths = found ? declaredDepths : 0;
 
         var visited = new HashSet<ISymbol>(SymbolEqualityComparer.Default)
@@ -102,8 +101,7 @@ internal static class ConstContractResolver
             return false;
         }
 
-        var found = TryGetDirectConstDepths(symbol, out depths)
-                    || TryGetStaticTypeConstDepths(symbol, out depths);
+        var found = TryGetDirectConstDepths(symbol, out depths);
         found |= UnionContractSources(symbol, visited, ref depths);
         return found;
     }
@@ -136,17 +134,6 @@ internal static class ConstContractResolver
             ? uint.MaxValue
             : (uint)attribute.ConstructorArguments[0].Value!;
         return true;
-    }
-
-    private static bool TryGetStaticTypeConstDepths(ISymbol symbol, out uint depths)
-    {
-        if (!symbol.IsStatic || symbol.ContainingType is null || GetDirectConstAttribute(symbol) is not null)
-        {
-            depths = 0;
-            return false;
-        }
-
-        return TryGetDirectConstDepths(symbol.ContainingType, out depths);
     }
 
     private static IEnumerable<ISymbol> GetContractSources(ISymbol symbol)

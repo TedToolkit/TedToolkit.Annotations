@@ -14,7 +14,7 @@ namespace TedToolkit.Annotations.Documentations;
 /// <param name="condition">The condition under which this behavior applies.</param>
 /// <param name="expected">The expected behavior.</param>
 /// <param name="hasUnitTest">Whether a unit test covers this behavior.</param>
-public sealed class BehaviorCaseAttribute<TException>(
+public class BehaviorCaseAttribute<TException>(
     string condition,
     string expected,
     bool hasUnitTest = false)

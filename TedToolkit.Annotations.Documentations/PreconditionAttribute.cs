@@ -18,7 +18,7 @@ namespace TedToolkit.Annotations.Documentations;
     | AttributeTargets.Parameter,
     AllowMultiple = true,
     Inherited = false)]
-public sealed class PreconditionAttribute(string description, Type? exceptionType = null) : DocumentationAttribute
+public class PreconditionAttribute(string description, Type? exceptionType = null) : DocumentationAttribute
 {
     /// <summary>
     /// Gets the required condition.

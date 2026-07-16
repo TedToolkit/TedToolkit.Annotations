@@ -54,8 +54,8 @@
   <data name="TAC300Message" xml:space="preserve"><value>Mutation at depth {0} violates the const contract on '{1}'</value></data>
   <data name="TAC301Title" xml:space="preserve"><value>Const cannot annotate an out parameter</value></data>
   <data name="TAC301Message" xml:space="preserve"><value>The const contract cannot be applied to out parameter '{0}'</value></data>
-  <data name="TAC302Title" xml:space="preserve"><value>Const.Local usage is invalid</value></data>
-  <data name="TAC302Message" xml:space="preserve"><value>Const.Local must directly initialize a local variable and use a compile-time constant depth mask</value></data>
+  <data name="TAC302Title" xml:space="preserve"><value>AsConst.Local usage is invalid</value></data>
+  <data name="TAC302Message" xml:space="preserve"><value>AsConst.Local must directly initialize a local variable and use a compile-time constant depth mask</value></data>
   <data name="TAC304Title" xml:space="preserve"><value>Source method requires a compatible Const contract</value></data>
   <data name="TAC304Message" xml:space="preserve"><value>Calling source method '{0}' can violate the const contract on '{1}'; add a compatible Const contract</value></data>
   <data name="TAC305Title" xml:space="preserve"><value>External method has no compatible Const contract</value></data>

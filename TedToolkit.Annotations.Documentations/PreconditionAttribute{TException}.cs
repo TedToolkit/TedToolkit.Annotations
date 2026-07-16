@@ -12,18 +12,6 @@ namespace TedToolkit.Annotations.Documentations;
 /// </summary>
 /// <typeparam name="TException">The exception thrown when the condition is not met.</typeparam>
 /// <param name="description">The required condition.</param>
-[AttributeUsage(AttributeTargets.All, AllowMultiple = false)]
 public sealed class PreconditionAttribute<TException>(string description)
-    : DocumentationAttribute
-    where TException : Exception
-{
-    /// <summary>
-    /// Gets the required condition.
-    /// </summary>
-    public string Description { get; } = description;
-
-    /// <summary>
-    /// Gets the exception thrown when the condition is not met.
-    /// </summary>
-    public Type ExceptionType { get; } = typeof(TException);
-}
+    : PreconditionAttribute(description, typeof(TException))
+    where TException : Exception;

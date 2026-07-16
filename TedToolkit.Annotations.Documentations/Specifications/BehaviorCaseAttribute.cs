@@ -15,7 +15,7 @@ namespace TedToolkit.Annotations.Documentations;
 /// <param name="condition">The condition under which this behavior applies.</param>
 /// <param name="expected">The expected behavior.</param>
 /// <param name="hasUnitTest">Whether a unit test covers this behavior.</param>
-/// <param name="exceptionType">The exception expected when this behavior fails, if any.</param>
+/// <param name="exceptionType">The exception expected for this behavior, if it throws.</param>
 [AttributeUsage(
     AttributeTargets.Constructor
     | AttributeTargets.Method,
@@ -44,7 +44,7 @@ public class BehaviorCaseAttribute(
     public bool HasUnitTest { get; } = hasUnitTest;
 
     /// <summary>
-    /// Gets the exception expected when this behavior fails, if specified.
+    /// Gets the exception expected for this behavior, if it throws.
     /// </summary>
     public Type? ExceptionType { get; } = ValidateExceptionType(exceptionType);
 

@@ -14,30 +14,9 @@ namespace TedToolkit.Annotations.Documentations;
 /// <param name="condition">The condition under which this behavior applies.</param>
 /// <param name="expected">The expected behavior.</param>
 /// <param name="hasUnitTest">Whether a unit test covers this behavior.</param>
-[AttributeUsage(AttributeTargets.All, AllowMultiple = false)]
 public sealed class BehaviorCaseAttribute<TException>(
     string condition,
     string expected,
-    bool hasUnitTest = false) : DocumentationAttribute
-    where TException : Exception
-{
-    /// <summary>
-    /// Gets the condition under which this behavior applies.
-    /// </summary>
-    public string Condition { get; } = condition;
-
-    /// <summary>
-    /// Gets the expected behavior.
-    /// </summary>
-    public string Expected { get; } = expected;
-
-    /// <summary>
-    /// Gets a value indicating whether a unit test covers this behavior.
-    /// </summary>
-    public bool HasUnitTest { get; } = hasUnitTest;
-
-    /// <summary>
-    /// Gets the exception expected when this behavior fails.
-    /// </summary>
-    public Type ExceptionType { get; } = typeof(TException);
-}
+    bool hasUnitTest = false)
+    : BehaviorCaseAttribute(condition, expected, hasUnitTest, typeof(TException))
+    where TException : Exception;

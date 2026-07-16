@@ -9,5 +9,6 @@
     <Description>Lightweight .NET attributes for documenting contracts, behavior, assumptions, side effects, and planned maintenance.</Description>
     <PackageTags>annotations;contracts;documentation;maintenance;technical-debt</PackageTags>
     <PackageProjectUrl>https://github.com/TedToolkit/TedToolkit.Annotations</PackageProjectUrl>
+    <NoWarn>$(NoWarn);CA1813</NoWarn>
   </PropertyGroup>
 </Project>

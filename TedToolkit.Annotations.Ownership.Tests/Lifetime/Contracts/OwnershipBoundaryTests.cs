@@ -9,11 +9,15 @@ using TedToolkit.Annotations.Analyzer.Tests.Lifetime;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Lifetime.Contracts;
 
+/// <summary>
+/// Contains tests for ownership boundary.
+/// </summary>
 internal sealed class OwnershipBoundaryTests
 {
     /// <summary>
     /// 验证方法必须释放或继续转移其接收所有权的输入参数。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_leak_when_transferred_input_parameter_is_abandoned()
     {
@@ -24,14 +28,15 @@ internal sealed class OwnershipBoundaryTests
                 {
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004",]);
     }
 
     /// <summary>
     /// 验证方法释放其接收所有权的输入参数后不会报告泄漏。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_complete_transferred_input_parameter_when_disposed()
     {
@@ -43,7 +48,7 @@ internal sealed class OwnershipBoundaryTests
                     resource.Dispose();
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -51,6 +56,7 @@ internal sealed class OwnershipBoundaryTests
     /// <summary>
     /// 验证借用返回契约不能返回方法中新建的自有资源。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_invalid_contract_when_borrowed_return_exposes_owned_resource()
     {
@@ -64,14 +70,15 @@ internal sealed class OwnershipBoundaryTests
                     return resource;
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO014"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO014",]);
     }
 
     /// <summary>
     /// 验证转移返回契约不能把借用资源声明为调用方所有。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_invalid_contract_when_owned_return_exposes_borrowed_resource()
     {
@@ -89,14 +96,15 @@ internal sealed class OwnershipBoundaryTests
                     return resource;
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO014"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO014",]);
     }
 
     /// <summary>
     /// 验证实现方法与接口继承的所有权契约冲突时会报告错误。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_conflict_between_declared_and_inherited_contracts()
     {
@@ -112,14 +120,15 @@ internal sealed class OwnershipBoundaryTests
                 {
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO014"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO014",]);
     }
 
     /// <summary>
     /// 验证借用输出契约不能向调用方交付方法中新建的自有资源。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_invalid_contract_when_borrowed_output_exposes_owned_resource()
     {
@@ -131,9 +140,9 @@ internal sealed class OwnershipBoundaryTests
                     resource = new Resource();
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO014"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO014",]);
     }
 
     private static string CreateSource(string members)

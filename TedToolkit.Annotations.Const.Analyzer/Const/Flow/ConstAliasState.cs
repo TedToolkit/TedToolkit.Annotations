@@ -100,7 +100,7 @@ internal sealed class ConstAliasState
     }
 
     /// <summary>
-    /// Tries to get the protected depth mask declared by <c>Const.Local</c>.
+    /// Tries to get the protected depth mask declared by <c>AsConst.Local</c>.
     /// </summary>
     /// <param name="local">The local symbol.</param>
     /// <param name="depths">The declared protected depth mask.</param>
@@ -143,7 +143,7 @@ internal sealed class ConstAliasState
     }
 
     /// <summary>
-    /// Sets the protected depth mask declared by <c>Const.Local</c>.
+    /// Sets the protected depth mask declared by <c>AsConst.Local</c>.
     /// </summary>
     /// <param name="local">The local symbol.</param>
     /// <param name="depths">The protected depth mask.</param>

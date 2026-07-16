@@ -9,18 +9,22 @@ using TedToolkit.Annotations.Analyzer.Tests.Lifetime;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Lifetime.Local;
 
+/// <summary>
+/// Contains tests for disposable expression alias.
+/// </summary>
 internal sealed class DisposableExpressionAliasTests
 {
     /// <summary>
     /// 验证条件表达式的两个分支引用同一资源时会保留别名关系。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_track_alias_through_conditional_expression()
     {
         var diagnostics = await LifetimeAnalyzerTestHelper.AnalyzeAsync(CreateSource("""
             var alias = condition ? resource : resource;
             alias.Dispose();
-            """));
+            """)).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -28,6 +32,7 @@ internal sealed class DisposableExpressionAliasTests
     /// <summary>
     /// 验证空值合并表达式的两侧引用同一资源时会保留别名关系。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_track_alias_through_coalesce_expression()
     {
@@ -35,7 +40,7 @@ internal sealed class DisposableExpressionAliasTests
             Resource? optional = resource;
             var alias = optional ?? resource;
             alias.Dispose();
-            """));
+            """)).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -43,6 +48,7 @@ internal sealed class DisposableExpressionAliasTests
     /// <summary>
     /// 验证通过条件表达式返回同一资源时会转移所有权。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_transfer_returned_resource_through_conditional_expression()
     {
@@ -63,7 +69,7 @@ internal sealed class DisposableExpressionAliasTests
                     return condition ? resource : resource;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }

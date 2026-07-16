@@ -18,11 +18,15 @@ using TedToolkit.Annotations.Documentations;
 
 namespace TedToolkit.Annotations.Analyzer.Tests;
 
+/// <summary>
+/// Contains tests for behavior case unit test code fix provider.
+/// </summary>
 internal sealed class BehaviorCaseUnitTestCodeFixProviderTests
 {
     /// <summary>
     /// 验证修复会将显式未覆盖的行为用例标记为已覆盖。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_mark_explicitly_uncovered_behavior_case_as_tested()
     {
@@ -34,7 +38,7 @@ internal sealed class BehaviorCaseUnitTestCodeFixProviderTests
                 [BehaviorCase("empty input", "Returns an empty result.", hasUnitTest: false)]
                 void Execute() { }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(updatedSource).Contains("hasUnitTest: true");
     }
@@ -42,6 +46,7 @@ internal sealed class BehaviorCaseUnitTestCodeFixProviderTests
     /// <summary>
     /// 验证修复会为使用默认值的行为用例添加已覆盖标记。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_add_tested_flag_when_behavior_case_uses_default_value()
     {
@@ -53,7 +58,7 @@ internal sealed class BehaviorCaseUnitTestCodeFixProviderTests
                 [BehaviorCase("empty input", "Returns an empty result.")]
                 void Execute() { }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(updatedSource).Contains("hasUnitTest: true");
     }
@@ -61,6 +66,7 @@ internal sealed class BehaviorCaseUnitTestCodeFixProviderTests
     /// <summary>
     /// 验证修复不支持批量操作。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_support_fix_all()
     {
@@ -75,30 +81,32 @@ internal sealed class BehaviorCaseUnitTestCodeFixProviderTests
         var solution = workspace.CurrentSolution
             .AddProject(projectId, "BehaviorCaseCodeFixTests", "BehaviorCaseCodeFixTests", LanguageNames.CSharp)
             .WithProjectCompilationOptions(projectId, new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary))
-            .WithProjectParseOptions(projectId, new CSharpParseOptions(LanguageVersion.Preview, preprocessorSymbols: ["ANNOTATIONS_BEHAVIOR_CASE"]))
+            .WithProjectParseOptions(
+                projectId,
+                new CSharpParseOptions(LanguageVersion.Preview, preprocessorSymbols: ["ANNOTATIONS_BEHAVIOR_CASE",]))
             .AddMetadataReferences(projectId, GetMetadataReferences())
             .AddDocument(documentId, "Sample.cs", SourceText.From(source));
         workspace.TryApplyChanges(solution);
 
         var document = workspace.CurrentSolution.GetDocument(documentId)!;
-        var diagnostic = (await AnalyzeAsync(document)).Single();
+        var diagnostic = (await AnalyzeAsync(document).ConfigureAwait(false)).Single();
         var actions = new List<CodeAction>();
         await new BehaviorCaseUnitTestCodeFixProvider().RegisterCodeFixesAsync(
-            new CodeFixContext(document, diagnostic, (action, _) => actions.Add(action), CancellationToken.None));
+            new CodeFixContext(document, diagnostic, (action, _) => actions.Add(action), CancellationToken.None)).ConfigureAwait(false);
         await Assert.That(actions).Count().IsEqualTo(1);
 
-        var operations = await actions[0].GetOperationsAsync(CancellationToken.None);
+        var operations = await actions[0].GetOperationsAsync(CancellationToken.None).ConfigureAwait(false);
         var updatedDocument = operations.OfType<ApplyChangesOperation>().Single().ChangedSolution.GetDocument(documentId)!;
-        await Assert.That(await AnalyzeAsync(updatedDocument)).IsEmpty();
-        return (await updatedDocument.GetTextAsync()).ToString();
+        await Assert.That(await AnalyzeAsync(updatedDocument).ConfigureAwait(false)).IsEmpty();
+        return (await updatedDocument.GetTextAsync().ConfigureAwait(false)).ToString();
     }
 
     private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(Document document)
     {
-        var compilation = await document.Project.GetCompilationAsync();
+        var compilation = await document.Project.GetCompilationAsync().ConfigureAwait(false);
         return await compilation!
             .WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(new BehaviorCaseUnitTestAnalyzer()))
-            .GetAnalyzerDiagnosticsAsync();
+            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 
     private static ImmutableArray<MetadataReference> GetMetadataReferences()

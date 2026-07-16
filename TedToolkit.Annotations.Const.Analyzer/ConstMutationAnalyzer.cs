@@ -33,7 +33,7 @@ public sealed class ConstMutationAnalyzer : DiagnosticAnalyzer
     public const string OUT_PARAMETER_DIAGNOSTIC_ID = "TAC301";
 
     /// <summary>
-    /// The diagnostic identifier for an invalid use of Const.Local.
+    /// The diagnostic identifier for an invalid use of AsConst.Local.
     /// </summary>
     public const string INVALID_LOCAL_DIAGNOSTIC_ID = "TAC302";
 
@@ -58,7 +58,7 @@ public sealed class ConstMutationAnalyzer : DiagnosticAnalyzer
     internal static readonly DiagnosticDescriptor OutParameterNotAllowed = ConstDiagnostics.OutParameterNotAllowed;
 
     /// <summary>
-    /// Describes an invalid use of <c>Const.Local</c>.
+    /// Describes an invalid use of <c>AsConst.Local</c>.
     /// </summary>
     internal static readonly DiagnosticDescriptor InvalidLocal = ConstDiagnostics.InvalidLocal;
 

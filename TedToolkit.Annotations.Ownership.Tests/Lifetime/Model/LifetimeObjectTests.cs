@@ -12,11 +12,15 @@ using TedToolkit.Annotations.Analyzer.Lifetime.Model;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Lifetime.Model;
 
+/// <summary>
+/// Contains tests for lifetime object.
+/// </summary>
 internal sealed class LifetimeObjectTests
 {
     /// <summary>
     /// 验证拥有的对象释放后不能再次使用或释放。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_reject_use_and_disposal_when_object_is_disposed()
     {
@@ -32,6 +36,7 @@ internal sealed class LifetimeObjectTests
     /// <summary>
     /// 验证转移所有权后不能继续使用或再次转移对象。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_reject_use_and_transfer_when_object_is_transferred()
     {
@@ -48,6 +53,7 @@ internal sealed class LifetimeObjectTests
     /// <summary>
     /// 验证覆盖拥有对象或结束作用域都会只报告一次所有权丢失。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_ownership_loss_once_when_object_is_overwritten()
     {
@@ -60,6 +66,7 @@ internal sealed class LifetimeObjectTests
     /// <summary>
     /// 验证借用对象不能由当前调用方释放。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_reject_disposal_when_object_is_borrowed()
     {
@@ -73,6 +80,7 @@ internal sealed class LifetimeObjectTests
     /// <summary>
     /// 验证所有合并路径均已失效时资源不能继续使用。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_reject_use_when_merged_paths_are_disposed_or_transferred()
     {
@@ -91,11 +99,10 @@ internal sealed class LifetimeObjectTests
         var tree = CSharpSyntaxTree.ParseText("sealed class Sample { private object field = new object(); }");
         var compilation = CSharpCompilation.Create(
             "LifetimeObjectTests",
-            [tree],
-            [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)]);
+            [tree,],
+            [MetadataReference.CreateFromFile(typeof(object).Assembly.Location),]);
         var symbol = compilation.GetTypeByMetadataName("Sample")!.GetMembers("field").Single();
 
-        return new LifetimeObject(symbol, symbol.Locations[0], isUsing: false, isBorrowed: isBorrowed);
+        return new(symbol, symbol.Locations[0], isUsing: false, isBorrowed: isBorrowed);
     }
-
 }

@@ -23,23 +23,12 @@ public sealed class BehaviorCaseUnitTestAnalyzer : DiagnosticAnalyzer
     /// </summary>
     public const string DIAGNOSTIC_ID = "TAD202";
 
-    /// <summary>
-    /// Describes a behavior case without unit-test coverage.
-    /// </summary>
-    public static readonly DiagnosticDescriptor UnitTestRequired = new(
-        "TAD202",
-        DiagnosticResources.Get("TAD202Title"),
-        DiagnosticResources.Get("TAD202Message"),
-        "Testing",
-        DiagnosticSeverity.Info,
-        isEnabledByDefault: true);
-
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
     {
         get
         {
-            return ImmutableArray.Create(UnitTestRequired);
+            return ImmutableArray.Create(DocumentationDiagnostics.UnitTestRequired);
         }
     }
 
@@ -72,7 +61,7 @@ public sealed class BehaviorCaseUnitTestAnalyzer : DiagnosticAnalyzer
                 ?? method.Locations.FirstOrDefault();
             if (location is not null)
             {
-                context.ReportDiagnostic(Diagnostic.Create(UnitTestRequired, location));
+                context.ReportDiagnostic(Diagnostic.Create(DocumentationDiagnostics.UnitTestRequired, location));
             }
         }
     }

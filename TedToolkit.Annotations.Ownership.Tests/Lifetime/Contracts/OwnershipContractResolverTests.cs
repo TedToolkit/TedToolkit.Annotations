@@ -9,11 +9,15 @@ using TedToolkit.Annotations.Analyzer.Tests.Lifetime;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Lifetime.Contracts;
 
+/// <summary>
+/// Contains tests for ownership contract resolver.
+/// </summary>
 internal sealed class OwnershipContractResolverTests
 {
     /// <summary>
     /// 验证实现方法会继承接口参数上的所有权转移契约。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_inherit_parameter_ownership_from_interface()
     {
@@ -37,14 +41,15 @@ internal sealed class OwnershipContractResolverTests
                     resource.Use();
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO003"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO003",]);
     }
 
     /// <summary>
     /// 验证实现方法会继承接口返回值上的借用契约。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_inherit_return_ownership_from_interface()
     {
@@ -71,14 +76,15 @@ internal sealed class OwnershipContractResolverTests
                     resource.Dispose();
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006",]);
     }
 
     /// <summary>
     /// 验证重写方法会继承基类参数上的所有权转移契约。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_inherit_parameter_ownership_from_overridden_method()
     {
@@ -102,14 +108,15 @@ internal sealed class OwnershipContractResolverTests
                     resource.Use();
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO003"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO003",]);
     }
 
     /// <summary>
     /// 验证同一流向上的冲突 Ownership 注解会报告错误。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_conflicting_ownership_annotations()
     {
@@ -122,14 +129,15 @@ internal sealed class OwnershipContractResolverTests
                 {
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO014"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO014",]);
     }
 
     /// <summary>
     /// 验证普通输入参数不能声明 OUTPUT 所有权流向。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_invalid_output_flow_on_non_ref_parameter()
     {
@@ -141,14 +149,15 @@ internal sealed class OwnershipContractResolverTests
                 {
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO014"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO014",]);
     }
 
     /// <summary>
     /// 验证未约束的泛型返回值可以声明所有权注解。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_allow_ownership_annotation_on_unconstrained_generic_return()
     {
@@ -172,7 +181,7 @@ internal sealed class OwnershipContractResolverTests
                     return creator(in obj);
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }

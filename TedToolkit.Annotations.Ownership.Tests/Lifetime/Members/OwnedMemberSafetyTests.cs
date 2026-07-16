@@ -9,11 +9,15 @@ using TedToolkit.Annotations.Analyzer.Tests.Lifetime;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Lifetime.Members;
 
+/// <summary>
+/// Contains tests for owned member safety.
+/// </summary>
 internal sealed class OwnedMemberSafetyTests
 {
     /// <summary>
     /// 验证释放其他实例的字段不能满足当前实例的释放责任。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_count_other_instance_field_as_current_instance_release()
     {
@@ -29,14 +33,15 @@ internal sealed class OwnedMemberSafetyTests
 
                 public void Dispose() => _other._resource.Dispose();
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO009"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO009",]);
     }
 
     /// <summary>
     /// 验证调用其他实例的释放辅助方法不能满足当前实例的释放责任。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_count_other_instance_helper_as_current_instance_release()
     {
@@ -54,14 +59,15 @@ internal sealed class OwnedMemberSafetyTests
 
                 private void Release() => _resource.Dispose();
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO009"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO009",]);
     }
 
     /// <summary>
     /// 验证自有字段被直接释放两次时会报告重复释放。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_double_dispose_when_owned_field_is_released_twice()
     {
@@ -77,14 +83,15 @@ internal sealed class OwnedMemberSafetyTests
                     _resource.Dispose();
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO001"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO001",]);
     }
 
     /// <summary>
     /// 验证通过局部别名释放自有字段会满足成员释放责任。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_recognize_owned_field_release_through_local_alias()
     {
@@ -100,7 +107,7 @@ internal sealed class OwnedMemberSafetyTests
                     resource.Dispose();
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -108,6 +115,7 @@ internal sealed class OwnedMemberSafetyTests
     /// <summary>
     /// 验证字段初始化器中新建的资源会被推断为当前类型所有。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_infer_owned_field_from_resource_initializer()
     {
@@ -116,14 +124,15 @@ internal sealed class OwnedMemberSafetyTests
             {
                 private readonly Resource _resource = new Resource();
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO008"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO008",]);
     }
 
     /// <summary>
     /// 验证构造函数中新建并保存的资源会被推断为当前类型所有。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_infer_owned_field_from_constructor_assignment()
     {
@@ -136,9 +145,9 @@ internal sealed class OwnedMemberSafetyTests
 
                 public void Dispose() { }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO009"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO009",]);
     }
 
     private static string CreateSource(string members)

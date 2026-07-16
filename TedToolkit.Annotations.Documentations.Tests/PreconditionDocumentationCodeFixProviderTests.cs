@@ -6,22 +6,28 @@
 // -----------------------------------------------------------------------
 
 using System.Collections.Immutable;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Text;
+
 using TedToolkit.Annotations.Analyzer;
 using TedToolkit.Annotations.Documentations;
 
 namespace TedToolkit.Annotations.Analyzer.Tests;
 
+/// <summary>
+/// Contains tests for precondition documentation code fix provider.
+/// </summary>
 internal sealed class PreconditionDocumentationCodeFixProviderTests
 {
     /// <summary>
     /// 验证缺少异常文档的前置条件报告信息级提示。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_info_diagnostic_when_exception_documentation_can_be_generated()
     {
@@ -33,7 +39,7 @@ internal sealed class PreconditionDocumentationCodeFixProviderTests
             {
                 void Execute([Precondition<ArgumentNullException>("Must not be null.")] string value) { }
             }
-            """);
+            """).ConfigureAwait(false);
 
         var diagnostic = diagnostics.Single(candidate => candidate.Id == PreconditionDocumentationAnalyzer.DIAGNOSTIC_ID);
         await Assert.That(diagnostic.Severity).IsEqualTo(DiagnosticSeverity.Info);
@@ -42,6 +48,7 @@ internal sealed class PreconditionDocumentationCodeFixProviderTests
     /// <summary>
     /// 验证修复会为相同异常类型的参数前置条件分别生成异常文档。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_generate_separate_exception_documentation_when_parameters_use_same_exception()
     {
@@ -56,7 +63,7 @@ internal sealed class PreconditionDocumentationCodeFixProviderTests
                     [Precondition<ArgumentNullException>("Must not be null.")] byte[] source,
                     [Precondition<ArgumentNullException>("Must not be null.")] byte[] destination) { }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(updatedSource).Contains("<summary>Copies bytes.</summary>");
         await Assert.That(updatedSource).Contains("<exception cref=\"global::System.ArgumentNullException\">");
@@ -68,6 +75,7 @@ internal sealed class PreconditionDocumentationCodeFixProviderTests
     /// <summary>
     /// 验证修复会为成员级跨参数前置条件生成单独的异常文档。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_generate_exception_documentation_when_precondition_describes_parameter_relationship()
     {
@@ -80,7 +88,7 @@ internal sealed class PreconditionDocumentationCodeFixProviderTests
                 [Precondition<ArgumentException>("start and length must designate a valid range.")]
                 void Slice(int start, int length) { }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(updatedSource).Contains("<exception cref=\"global::System.ArgumentException\">");
         await Assert.That(updatedSource).Contains("start and length must designate a valid range.");
@@ -89,6 +97,7 @@ internal sealed class PreconditionDocumentationCodeFixProviderTests
     /// <summary>
     /// 验证已生成的异常文档不会再次触发前置条件文档提示。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_diagnostic_when_generated_exception_documentation_is_present()
     {
@@ -103,7 +112,7 @@ internal sealed class PreconditionDocumentationCodeFixProviderTests
                 /// </exception>
                 void Execute([Precondition<ArgumentNullException>("Must not be null.")] string value) { }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Where(candidate => candidate.Id == PreconditionDocumentationAnalyzer.DIAGNOSTIC_ID)).IsEmpty();
     }
@@ -111,6 +120,7 @@ internal sealed class PreconditionDocumentationCodeFixProviderTests
     /// <summary>
     /// 验证未声明异常类型的前置条件不会触发异常文档提示。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_diagnostic_when_precondition_does_not_declare_exception_type()
     {
@@ -121,7 +131,7 @@ internal sealed class PreconditionDocumentationCodeFixProviderTests
             {
                 void Execute([Precondition("Must not be empty.")] string value) { }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Where(candidate => candidate.Id == PreconditionDocumentationAnalyzer.DIAGNOSTIC_ID)).IsEmpty();
     }
@@ -140,20 +150,20 @@ internal sealed class PreconditionDocumentationCodeFixProviderTests
         workspace.TryApplyChanges(solution);
 
         var document = workspace.CurrentSolution.GetDocument(documentId)!;
-        var diagnostics = await AnalyzeAsync(document);
+        var diagnostics = await AnalyzeAsync(document).ConfigureAwait(false);
         var diagnostic = diagnostics.Single(candidate => candidate.Id == PreconditionDocumentationAnalyzer.DIAGNOSTIC_ID);
 
         var actions = new List<CodeAction>();
         var context = new CodeFixContext(document, diagnostic, (action, _) => actions.Add(action), CancellationToken.None);
-        await new PreconditionDocumentationCodeFixProvider().RegisterCodeFixesAsync(context);
+        await new PreconditionDocumentationCodeFixProvider().RegisterCodeFixesAsync(context).ConfigureAwait(false);
         await Assert.That(actions).Count().IsEqualTo(1);
 
-        var operations = await actions[0].GetOperationsAsync(CancellationToken.None);
+        var operations = await actions[0].GetOperationsAsync(CancellationToken.None).ConfigureAwait(false);
         var applyChanges = operations.OfType<ApplyChangesOperation>().Single();
         var updatedDocument = applyChanges.ChangedSolution.GetDocument(documentId)!;
-        var updatedSource = (await updatedDocument.GetTextAsync()).ToString();
+        var updatedSource = (await updatedDocument.GetTextAsync().ConfigureAwait(false)).ToString();
 
-        var updatedDiagnostics = await AnalyzeAsync(updatedDocument);
+        var updatedDiagnostics = await AnalyzeAsync(updatedDocument).ConfigureAwait(false);
         await Assert.That(updatedDiagnostics.Where(candidate => candidate.Id == PreconditionDocumentationAnalyzer.DIAGNOSTIC_ID)).IsEmpty();
 
         return updatedSource;
@@ -172,15 +182,15 @@ internal sealed class PreconditionDocumentationCodeFixProviderTests
             .AddDocument(documentId, "Sample.cs", SourceText.From(source));
         workspace.TryApplyChanges(solution);
 
-        return await AnalyzeAsync(workspace.CurrentSolution.GetDocument(documentId)!);
+        return await AnalyzeAsync(workspace.CurrentSolution.GetDocument(documentId)!).ConfigureAwait(false);
     }
 
     private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(Document document)
     {
-        var compilation = await document.Project.GetCompilationAsync();
+        var compilation = await document.Project.GetCompilationAsync().ConfigureAwait(false);
         return await compilation!
             .WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(new PreconditionDocumentationAnalyzer()))
-            .GetAnalyzerDiagnosticsAsync();
+            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 
     private static ImmutableArray<MetadataReference> GetMetadataReferences()

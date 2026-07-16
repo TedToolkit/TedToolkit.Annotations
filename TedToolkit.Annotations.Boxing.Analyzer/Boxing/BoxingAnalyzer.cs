@@ -17,7 +17,7 @@ using TedToolkit.Annotations.Analyzer.Boxing;
 namespace TedToolkit.Annotations.Analyzer;
 
 /// <summary>
-/// Reports boxing conversions that are not made explicit through <c>Boxing.Box</c>.
+/// Reports boxing conversions that are not made explicit through <c>Boxer.Box</c>.
 /// </summary>
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class BoxingAnalyzer : DiagnosticAnalyzer
@@ -27,7 +27,7 @@ public sealed class BoxingAnalyzer : DiagnosticAnalyzer
     /// </summary>
     public const string DIAGNOSTIC_ID = "TAB201";
 
-    private const string EXPLICIT_TYPE_NAME = "TedToolkit.Annotations.Boxing.Boxing";
+    private const string EXPLICIT_TYPE_NAME = "TedToolkit.Annotations.Boxing.Boxer";
 
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
@@ -84,7 +84,7 @@ public sealed class BoxingAnalyzer : DiagnosticAnalyzer
 
     private static bool IsExplicitBoxArgument(IOperation operation)
     {
-        // Roslyn may insert one or more conversions around the argument before it reaches Boxing.Box.
+        // Roslyn may insert one or more conversions around the argument before it reaches Boxer.Box.
         while (operation.Parent is IConversionOperation parentConversion)
         {
             operation = parentConversion;

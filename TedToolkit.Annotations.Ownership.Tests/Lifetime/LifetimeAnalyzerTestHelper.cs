@@ -15,13 +15,21 @@ using TedToolkit.Annotations.Ownership;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Lifetime;
 
+/// <summary>
+/// Provides shared functionality for lifetime analyzer test helper.
+/// </summary>
 internal static class LifetimeAnalyzerTestHelper
 {
+    /// <summary>
+    /// Analyzes source code for disposable-lifetime diagnostics.
+    /// </summary>
+    /// <param name="source">The source code to analyze.</param>
+    /// <returns>The analyzer diagnostics.</returns>
     internal static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source)
     {
         var compilation = CSharpCompilation.Create(
             assemblyName: "LifetimeTests",
-            syntaxTrees: [CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Preview))],
+            syntaxTrees: [CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Preview)),],
             references: GetMetadataReferences(),
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
@@ -31,10 +39,15 @@ internal static class LifetimeAnalyzerTestHelper
         await Assert.That(compilerDiagnostics).IsEmpty();
 
         return await compilation
-            .WithAnalyzers([new DisposableLifetimeAnalyzer()], CreateAnalyzerOptions(enableOwnershipAnalysis: true))
-            .GetAnalyzerDiagnosticsAsync();
+            .WithAnalyzers([new DisposableLifetimeAnalyzer(),], CreateAnalyzerOptions(enableOwnershipAnalysis: true))
+            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Creates analyzer options for the requested ownership-analysis setting.
+    /// </summary>
+    /// <param name="enableOwnershipAnalysis">Whether ownership analysis is enabled.</param>
+    /// <returns>The configured analyzer options.</returns>
     internal static AnalyzerOptions CreateAnalyzerOptions(bool enableOwnershipAnalysis)
     {
         var options = enableOwnershipAnalysis
@@ -42,7 +55,7 @@ internal static class LifetimeAnalyzerTestHelper
                 OwnershipAnalysisOptions.ENABLE_OWNERSHIP_ANALYSIS_PROPERTY_NAME,
                 bool.TrueString)
             : ImmutableDictionary<string, string>.Empty;
-        return new AnalyzerOptions([], new TestAnalyzerConfigOptionsProvider(options));
+        return new([], new TestAnalyzerConfigOptionsProvider(options));
     }
 
     private static ImmutableArray<MetadataReference> GetMetadataReferences()
@@ -61,15 +74,24 @@ internal static class LifetimeAnalyzerTestHelper
     {
         public override AnalyzerConfigOptions GlobalOptions { get; } = new TestAnalyzerConfigOptions(globalOptions);
 
-        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree) => Empty;
+        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree)
+        {
+            return Empty;
+        }
 
-        public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => Empty;
+        public override AnalyzerConfigOptions GetOptions(AdditionalText textFile)
+        {
+            return Empty;
+        }
 
         private static AnalyzerConfigOptions Empty { get; } = new TestAnalyzerConfigOptions([]);
     }
 
     private sealed class TestAnalyzerConfigOptions(ImmutableDictionary<string, string> options) : AnalyzerConfigOptions
     {
-        public override bool TryGetValue(string key, out string value) => options.TryGetValue(key, out value!);
+        public override bool TryGetValue(string key, out string value)
+        {
+            return options.TryGetValue(key, out value!);
+        }
     }
 }

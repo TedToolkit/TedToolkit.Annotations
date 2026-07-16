@@ -9,11 +9,15 @@ using Microsoft.CodeAnalysis;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Const;
 
+/// <summary>
+/// Contains tests for const invocation contract.
+/// </summary>
 internal sealed class ConstInvocationContractTests
 {
     /// <summary>
     /// 验证带 Const 特性的只读 in 参数可以使用 default 作为可选参数默认值。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_allow_default_value_for_const_in_parameter()
     {
@@ -29,7 +33,7 @@ internal sealed class ConstInvocationContractTests
                     return ref result;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -37,6 +41,7 @@ internal sealed class ConstInvocationContractTests
     /// <summary>
     /// 验证 Const 接收者和参数调用无契约源码方法时会报告错误。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_error_for_incompatible_source_calls()
     {
@@ -58,7 +63,7 @@ internal sealed class ConstInvocationContractTests
 
                 private static void Consume(Node node) { }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -71,6 +76,7 @@ internal sealed class ConstInvocationContractTests
     /// <summary>
     /// 验证目标方法和参数具有兼容 Const 深度时允许调用。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_allow_calls_with_compatible_const_contracts()
     {
@@ -93,7 +99,7 @@ internal sealed class ConstInvocationContractTests
 
                 private static void Consume([Const] Node node) { }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -101,6 +107,7 @@ internal sealed class ConstInvocationContractTests
     /// <summary>
     /// 验证无法验证 Const 契约的外部方法调用只报告信息。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_info_for_unverifiable_external_call()
     {
@@ -125,7 +132,7 @@ internal sealed class ConstInvocationContractTests
                 }
             }
             """,
-            externalReference);
+            externalReference).ConfigureAwait(false);
 
         var diagnostic = diagnostics.Single();
         await Assert.That(diagnostic.Id).IsEqualTo(ConstMutationAnalyzer.EXTERNAL_CALL_DIAGNOSTIC_ID);
@@ -135,6 +142,7 @@ internal sealed class ConstInvocationContractTests
     /// <summary>
     /// 验证外部方法具有兼容 Const 元数据时不会报告信息。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_allow_external_call_with_compatible_const_metadata()
     {
@@ -162,7 +170,7 @@ internal sealed class ConstInvocationContractTests
                 }
             }
             """,
-            externalReference);
+            externalReference).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }

@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="..\externals\TedToolkit\props\NugetPackage.props" />
   <Import Project="..\externals\TedToolkit\props\AlmostAllFrameworks.props" />
+  <Import Project="..\externals\TedToolkit\props\CodeAnalysis.props" />
   <PropertyGroup>
     <Title>Maintenance annotations</Title>
     <Description>Source-level annotations for technical debt and planned maintenance.</Description>

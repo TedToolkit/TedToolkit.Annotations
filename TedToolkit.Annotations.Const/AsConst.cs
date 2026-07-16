@@ -1,3 +1,10 @@
+// -----------------------------------------------------------------------
+// <copyright file="AsConst.cs" company="TedToolkit">
+// Copyright (c) TedToolkit. All rights reserved.
+// Licensed under the LGPL-3.0 license. See COPYING, COPYING.LESSER file in the project root for full license information.
+// </copyright>
+// -----------------------------------------------------------------------
+
 using System.Runtime.CompilerServices;
 
 namespace TedToolkit.Annotations.Const;
@@ -5,7 +12,7 @@ namespace TedToolkit.Annotations.Const;
 /// <summary>
 /// Makes a local const contract explicit to source readers and analyzers.
 /// </summary>
-public static class Const
+public static class AsConst
 {
     /// <summary>
     /// Returns <paramref name="value"/> unchanged while applying a const contract to the receiving local variable.

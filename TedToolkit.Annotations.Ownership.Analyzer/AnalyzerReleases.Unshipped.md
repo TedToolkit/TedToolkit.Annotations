@@ -20,13 +20,3 @@ TAO011 | Lifetime | Warning | Owned disposable resource is overwritten
 TAO012 | Lifetime | Info | Owned disposable property is overwritten
 TAO013 | Lifetime | Warning | Asynchronous disposal result is not observed
 TAO014 | Lifetime | Error | Ownership contract is invalid
-TAM100 | Maintenance | Info | Workaround API is invoked
-TAM101 | Maintenance | Info | Temporary implementation is invoked
-TAM102 | Maintenance | Info | Technical-debt API is invoked
-TAM103 | Maintenance | Info | Cleanup-required API is invoked
-TAB201 | Performance | Info | Boxing conversion should be explicit
-TAC300 | Const | Error | Const contract is violated
-TAC301 | Const | Error | Const cannot annotate an out parameter
-TAC302 | Const | Error | Const.Local usage is invalid
-TAC304 | Const | Error | Source method requires a compatible Const contract
-TAC305 | Const | Info | External method has no compatible Const contract

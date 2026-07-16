@@ -23,7 +23,7 @@ internal static class ConstContractResolver
     /// <summary>
     /// The metadata name of the <c>Explicit</c> helper type.
     /// </summary>
-    private const string EXPLICIT_TYPE_NAME = "TedToolkit.Annotations.Const.Const";
+    private const string EXPLICIT_TYPE_NAME = "TedToolkit.Annotations.Const.AsConst";
 
     /// <summary>
     /// Reports const attributes applied to out parameters.
@@ -85,10 +85,10 @@ internal static class ConstContractResolver
     }
 
     /// <summary>
-    /// Determines whether a method is one of the <c>Const.Local</c> overloads.
+    /// Determines whether a method is one of the <c>AsConst.Local</c> overloads.
     /// </summary>
     /// <param name="method">The method to inspect.</param>
-    /// <returns><see langword="true"/> when the method is <c>Const.Local</c>.</returns>
+    /// <returns><see langword="true"/> when the method is <c>AsConst.Local</c>.</returns>
     internal static bool IsConstLocal(IMethodSymbol method)
     {
         return method.Name == "Local" && method.ContainingType.ToDisplayString() == EXPLICIT_TYPE_NAME;

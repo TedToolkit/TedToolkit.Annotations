@@ -15,11 +15,15 @@ using TedToolkit.Annotations.Boxing;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Boxing;
 
+/// <summary>
+/// Contains tests for boxing analyzer.
+/// </summary>
 internal sealed class BoxingAnalyzerTests
 {
     /// <summary>
     /// 验证到 object 和接口的隐式及显式装箱都会产生信息提示。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_implicit_and_explicit_boxing_conversions()
     {
@@ -32,7 +36,7 @@ internal sealed class BoxingAnalyzerTests
 
                 IComparable BoxInterface(int value) => (IComparable)value;
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -43,8 +47,9 @@ internal sealed class BoxingAnalyzerTests
     }
 
     /// <summary>
-    /// 验证引用转换和通过 Boxing.Box 表达的显式装箱不会产生提示。
+    /// 验证引用转换和通过 Boxer.Box 表达的显式装箱不会产生提示。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_reference_conversions_or_explicit_box_calls()
     {
@@ -54,13 +59,13 @@ internal sealed class BoxingAnalyzerTests
 
             sealed class Sample
             {
-                object BoxObject(int value) => Boxing.Box(value);
+                object BoxObject(int value) => Boxer.Box(value);
 
-                IComparable BoxInterface(int value) => Boxing.Box<IComparable, int>(value);
+                IComparable BoxInterface(int value) => Boxer.Box<IComparable, int>(value);
 
                 object Upcast(string value) => value;
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -68,6 +73,7 @@ internal sealed class BoxingAnalyzerTests
     /// <summary>
     /// 验证可空值类型和受值类型约束泛型参数的确定装箱会产生提示。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_nullable_and_struct_constrained_generic_boxing()
     {
@@ -80,7 +86,7 @@ internal sealed class BoxingAnalyzerTests
                     where T : struct
                     => value;
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -92,6 +98,7 @@ internal sealed class BoxingAnalyzerTests
     /// <summary>
     /// 验证未约束泛型参数因运行时可能是引用类型而不会报告确定装箱。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_runtime_dependent_boxing_for_unconstrained_generic()
     {
@@ -100,7 +107,7 @@ internal sealed class BoxingAnalyzerTests
             {
                 object Box<T>(T value) => value;
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -108,6 +115,7 @@ internal sealed class BoxingAnalyzerTests
     /// <summary>
     /// 验证装箱为 ValueType、Enum、接口、dynamic、参数和 params 元素都会产生提示。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_boxing_for_supported_reference_targets_and_arguments()
     {
@@ -133,7 +141,7 @@ internal sealed class BoxingAnalyzerTests
                     _ = string.Format("{0}", value);
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).Count().IsEqualTo(6);
         await Assert.That(diagnostics.All(diagnostic => diagnostic.Id == BoxingAnalyzer.DIAGNOSTIC_ID)).IsTrue();
@@ -142,6 +150,7 @@ internal sealed class BoxingAnalyzerTests
     /// <summary>
     /// 验证不会为无装箱分配的插值、模式匹配和受约束泛型调用产生提示。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_operations_that_do_not_box_at_runtime()
     {
@@ -156,7 +165,7 @@ internal sealed class BoxingAnalyzerTests
                     where T : struct
                     => value.ToString();
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -179,7 +188,7 @@ internal sealed class BoxingAnalyzerTests
 
         return await compilation
             .WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(new BoxingAnalyzer()))
-            .GetAnalyzerDiagnosticsAsync();
+            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 
     private static ImmutableArray<MetadataReference> GetMetadataReferences()
@@ -188,7 +197,7 @@ internal sealed class BoxingAnalyzerTests
         return trustedPlatformAssemblies!
             .Split(Path.PathSeparator)
             .Select(path => (MetadataReference)MetadataReference.CreateFromFile(path))
-            .Append(MetadataReference.CreateFromFile(typeof(global::TedToolkit.Annotations.Boxing.Boxing).Assembly.Location))
+            .Append(MetadataReference.CreateFromFile(typeof(global::TedToolkit.Annotations.Boxing.Boxer).Assembly.Location))
             .ToImmutableArray();
     }
 }

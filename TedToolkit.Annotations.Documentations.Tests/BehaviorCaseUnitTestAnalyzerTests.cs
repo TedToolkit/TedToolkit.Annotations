@@ -6,6 +6,7 @@
 // -----------------------------------------------------------------------
 
 using System.Collections.Immutable;
+using System.Globalization;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -16,11 +17,15 @@ using TedToolkit.Annotations.Documentations;
 
 namespace TedToolkit.Annotations.Analyzer.Tests;
 
+/// <summary>
+/// Contains tests for behavior case unit test analyzer.
+/// </summary>
 internal sealed class BehaviorCaseUnitTestAnalyzerTests
 {
     /// <summary>
     /// 验证未覆盖的行为用例报告信息级提示。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_info_when_behavior_case_has_no_unit_test()
     {
@@ -32,17 +37,19 @@ internal sealed class BehaviorCaseUnitTestAnalyzerTests
                 [BehaviorCase("empty input", "Returns an empty result.", hasUnitTest: false)]
                 void Execute() { }
             }
-            """);
+            """).ConfigureAwait(false);
 
         var diagnostic = diagnostics.Single();
         await Assert.That(diagnostic.Id).IsEqualTo(BehaviorCaseUnitTestAnalyzer.DIAGNOSTIC_ID);
         await Assert.That(diagnostic.Severity).IsEqualTo(DiagnosticSeverity.Info);
-        await Assert.That(diagnostic.GetMessage()).IsEqualTo("This behavior case is not covered by a unit test.");
+        await Assert.That(diagnostic.GetMessage(CultureInfo.InvariantCulture))
+            .IsEqualTo("This behavior case is not covered by a unit test.");
     }
 
     /// <summary>
     /// 验证已覆盖的普通和泛型行为用例不会报告提示。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_when_behavior_case_has_unit_test()
     {
@@ -56,7 +63,7 @@ internal sealed class BehaviorCaseUnitTestAnalyzerTests
                 [BehaviorCase<ArgumentException>("invalid input", "Throws.", hasUnitTest: true)]
                 void Execute() { }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -69,14 +76,14 @@ internal sealed class BehaviorCaseUnitTestAnalyzerTests
             [
                 CSharpSyntaxTree.ParseText(
                     source,
-                    new CSharpParseOptions(LanguageVersion.Preview, preprocessorSymbols: ["ANNOTATIONS_BEHAVIOR_CASE"])),
+                    new CSharpParseOptions(LanguageVersion.Preview, preprocessorSymbols: ["ANNOTATIONS_BEHAVIOR_CASE",])),
             ],
             references: GetMetadataReferences(),
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
         await Assert.That(compilation.GetDiagnostics().Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)).IsEmpty();
         return await compilation.WithAnalyzers(ImmutableArray.Create<DiagnosticAnalyzer>(new BehaviorCaseUnitTestAnalyzer()))
-            .GetAnalyzerDiagnosticsAsync();
+            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 
     private static ImmutableArray<MetadataReference> GetMetadataReferences()

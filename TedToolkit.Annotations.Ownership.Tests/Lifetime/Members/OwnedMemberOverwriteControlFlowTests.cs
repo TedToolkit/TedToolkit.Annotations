@@ -9,11 +9,15 @@ using TedToolkit.Annotations.Analyzer.Tests.Lifetime;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Lifetime.Members;
 
+/// <summary>
+/// Contains tests for owned member overwrite control flow.
+/// </summary>
 internal sealed class OwnedMemberOverwriteControlFlowTests
 {
     /// <summary>
     /// 验证只有部分路径释放拥有字段时，后续覆盖仍会报告所有权丢失。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_overwrite_when_only_one_path_releases_owned_field()
     {
@@ -24,14 +28,15 @@ internal sealed class OwnedMemberOverwriteControlFlowTests
             }
 
             _resource = new Resource();
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO011"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO011",]);
     }
 
     /// <summary>
     /// 验证所有路径都释放拥有字段后再覆盖时不会报告所有权丢失。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_overwrite_when_all_paths_release_owned_field()
     {
@@ -46,7 +51,7 @@ internal sealed class OwnedMemberOverwriteControlFlowTests
             }
 
             _resource = new Resource();
-            """));
+            """)).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }

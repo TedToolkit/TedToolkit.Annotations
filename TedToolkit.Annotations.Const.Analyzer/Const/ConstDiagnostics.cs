@@ -29,7 +29,7 @@ internal static class ConstDiagnostics
         DiagnosticSeverity.Error);
 
     /// <summary>
-    /// Reports an invalid use of <c>Const.Local</c>.
+    /// Reports an invalid use of <c>AsConst.Local</c>.
     /// </summary>
     internal static readonly DiagnosticDescriptor InvalidLocal = Create(
         ConstMutationAnalyzer.INVALID_LOCAL_DIAGNOSTIC_ID,

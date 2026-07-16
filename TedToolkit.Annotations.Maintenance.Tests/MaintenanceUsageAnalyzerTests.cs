@@ -7,19 +7,25 @@
 
 using System.Collections.Immutable;
 using System.Globalization;
+
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Diagnostics;
+
 using TedToolkit.Annotations.Analyzer;
 using TedToolkit.Annotations.Maintenance;
 
 namespace TedToolkit.Annotations.Analyzer.Tests;
 
+/// <summary>
+/// Contains tests for maintenance usage analyzer.
+/// </summary>
 internal sealed class MaintenanceUsageAnalyzerTests
 {
     /// <summary>
     /// 验证分析器公开完整的维护调用诊断目录及预期严重级别。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_expose_complete_maintenance_usage_diagnostic_catalog()
     {
@@ -40,6 +46,7 @@ internal sealed class MaintenanceUsageAnalyzerTests
     /// <summary>
     /// 验证调用带维护标注的方法和构造函数会报告对应警告及维护上下文。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_maintenance_context_when_annotated_members_are_invoked()
     {
@@ -71,7 +78,7 @@ internal sealed class MaintenanceUsageAnalyzerTests
                     sample.Validate();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -80,20 +87,26 @@ internal sealed class MaintenanceUsageAnalyzerTests
             "TAM102",
             "TAM103",
         ]);
-        var messages = string.Join("\n", diagnostics.Select(diagnostic => diagnostic.GetMessage()));
+        var messages = string.Join(
+            "\n",
+            diagnostics.Select(diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)));
         await Assert.That(messages).Contains("Reason: Serializer bug.");
         await Assert.That(messages).Contains("Reason: OAuth is not ready.");
         await Assert.That(messages).Contains("PERFORMANCE technical-debt API");
         await Assert.That(messages).Contains("Remove when: Legacy format is removed");
         await Assert.That(messages).Contains("No removal condition is specified");
 
-        var chineseMessages = string.Join("\n", diagnostics.Select(diagnostic => diagnostic.GetMessage(CultureInfo.GetCultureInfo("zh-CN"))));
-        await Assert.That(chineseMessages).Contains("调用了性能技术债 API“Sample.Process()”。原因：Avoid allocation until profiling is complete。未指定移除条件");
+        var chineseMessages = string.Join(
+            "\n",
+            diagnostics.Select(diagnostic => diagnostic.GetMessage(CultureInfo.GetCultureInfo("zh-CN"))));
+        await Assert.That(chineseMessages)
+            .Contains("调用了性能技术债 API“Sample.Process()”。原因：Avoid allocation until profiling is complete。未指定移除条件");
     }
 
     /// <summary>
     /// 验证未带维护标注的成员调用不会报告维护警告。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_maintenance_warning_when_member_is_not_annotated()
     {
@@ -107,7 +120,7 @@ internal sealed class MaintenanceUsageAnalyzerTests
             {
                 void Execute() => new Sample().Execute();
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Where(diagnostic => diagnostic.Id is "TAM100" or "TAM101" or "TAM102" or "TAM103"))
             .IsEmpty();
@@ -121,7 +134,7 @@ internal sealed class MaintenanceUsageAnalyzerTests
             [
                 CSharpSyntaxTree.ParseText(
                     source,
-                    new CSharpParseOptions(LanguageVersion.Preview, preprocessorSymbols: ["ANNOTATIONS_MAINTENANCE"])),
+                    new CSharpParseOptions(LanguageVersion.Preview, preprocessorSymbols: ["ANNOTATIONS_MAINTENANCE",])),
             ],
             references: GetMetadataReferences(),
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
@@ -135,7 +148,7 @@ internal sealed class MaintenanceUsageAnalyzerTests
         var compilationWithAnalyzers = compilation.WithAnalyzers(
             ImmutableArray.Create<DiagnosticAnalyzer>(analyzer));
 
-        return await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync();
+        return await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 
     private static ImmutableArray<MetadataReference> GetMetadataReferences()

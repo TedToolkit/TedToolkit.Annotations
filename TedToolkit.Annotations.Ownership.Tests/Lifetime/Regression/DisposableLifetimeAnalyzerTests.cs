@@ -16,11 +16,15 @@ using TedToolkit.Annotations.Ownership;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Lifetime.Regression;
 
+/// <summary>
+/// Contains tests for disposable lifetime analyzer.
+/// </summary>
 internal sealed class DisposableLifetimeAnalyzerTests
 {
     /// <summary>
     /// 验证分析器公开的诊断目录包含所有生命周期规则及其预期严重级别。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_expose_complete_disposable_lifetime_diagnostic_catalog()
     {
@@ -50,6 +54,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证未在项目中显式启用时不执行 Ownership 检查。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_run_ownership_analysis_by_default()
     {
@@ -65,7 +70,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
             {
                 void Execute() { var resource = new Resource(); }
             }
-            """, enableOwnershipAnalysis: false);
+            """, enableOwnershipAnalysis: false).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -73,6 +78,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证 Ownership 不能标记在非 IDisposable 的字段、属性、参数或返回值上。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_ownership_when_annotated_type_is_not_disposable()
     {
@@ -92,14 +98,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                 [return: Ownership(OwnershipKind.TRANSFERRED)]
                 public Token Create([Ownership(OwnershipKind.TRANSFERRED)] Token token) => token;
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO010", "TAO010", "TAO010", "TAO010"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO010", "TAO010", "TAO010", "TAO010",]);
     }
 
     /// <summary>
     /// 验证 Ownership 可以标记在实现 IDisposable 的字段、属性、参数和返回值上。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_ownership_when_annotated_type_is_disposable()
     {
@@ -123,7 +130,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
                 [return: Ownership(OwnershipKind.TRANSFERRED)]
                 public Resource Create([Ownership(OwnershipKind.TRANSFERRED)] Resource resource) => resource;
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -131,6 +138,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证 Ownership 可以标记在递归承载 IDisposable 元素的 Dictionary 字段上。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_ownership_when_dictionary_structurally_carries_disposable_resources()
     {
@@ -162,7 +170,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     _resources.Clear();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -170,6 +178,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证拥有 IDisposable 元素的 Dictionary 仅清空而未释放元素时会报告未释放资源。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_owned_dictionary_when_dispose_does_not_release_contained_resources()
     {
@@ -190,14 +199,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
                 public void Dispose() => _resources.Clear();
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO009"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO009",]);
     }
 
     /// <summary>
     /// 验证 Ownership 不能标记在既不可释放也不承载可释放资源的 Dictionary 字段上。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_ownership_when_dictionary_does_not_carry_disposable_resources()
     {
@@ -213,14 +223,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                 [Ownership(OwnershipKind.TRANSFERRED)]
                 private readonly Dictionary<Guid, ICollection<Token>> _tokens = new();
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO010"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO010",]);
     }
 
     /// <summary>
     /// 验证未转移且未释放的新建 IDisposable 会报告资源泄漏。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_leak_when_owned_disposable_is_not_disposed()
     {
@@ -239,14 +250,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     var resource = new Resource();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004",]);
     }
 
     /// <summary>
     /// 验证同一资源被重复释放时会报告错误。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_double_dispose_when_resource_is_disposed_twice()
     {
@@ -267,14 +279,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO001"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO001",]);
     }
 
     /// <summary>
     /// 验证已释放资源再次调用成员时会报告错误。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_use_after_dispose_when_member_is_invoked_after_disposal()
     {
@@ -296,14 +309,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Use();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO002"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO002",]);
     }
 
     /// <summary>
     /// 验证所有权转移后调用方继续释放资源时会报告错误。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_dispose_after_ownership_transfer_when_caller_disposes_resource()
     {
@@ -330,14 +344,16 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO003"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO003",]);
     }
 
     /// <summary>
     /// 验证延迟或订阅回调捕获 using 资源时会报告生命周期错误。
     /// </summary>
+    /// <param name="lifetime">The <paramref name="lifetime"/> value for the test case.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     [Arguments("DEFERRED")]
     [Arguments("SUBSCRIPTION")]
@@ -366,14 +382,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     new Receiver().Schedule(() => resource.Use());
                 }
             }
-            """.Replace("__LIFETIME__", lifetime));
+            """.Replace("__LIFETIME__", lifetime, StringComparison.Ordinal)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO005"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO005",]);
     }
 
     /// <summary>
     /// 验证传统 using 语句会接管资源并避免泄漏报告。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_leak_when_resource_is_managed_by_using_statement()
     {
@@ -395,7 +412,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     }
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -403,6 +420,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证 using 范围内显式释放资源会报告重复释放。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_double_dispose_when_using_resource_is_disposed_explicitly()
     {
@@ -422,14 +440,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO001"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO001",]);
     }
 
     /// <summary>
     /// 验证所有权转移后继续调用资源成员会报告错误。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_member_use_after_ownership_transfer()
     {
@@ -457,14 +476,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Use();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO003"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO003",]);
     }
 
     /// <summary>
     /// 验证通过局部变量别名释放资源会完成原始所有者的生命周期。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_leak_when_disposable_is_disposed_through_local_alias()
     {
@@ -485,7 +505,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     alias.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -493,6 +513,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证覆盖仍由当前方法拥有的资源会报告覆盖错误。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_overwrite_when_owned_disposable_is_overwritten()
     {
@@ -513,14 +534,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO011"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO011",]);
     }
 
     /// <summary>
     /// 验证延迟回调捕获普通资源后提前释放资源会报告生命周期错误。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_disposal_after_disposable_is_captured_by_deferred_callback()
     {
@@ -548,14 +570,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO005"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO005",]);
     }
 
     /// <summary>
     /// 验证重复赋值同一资源别名不会被误判为资源泄漏。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_leak_when_local_alias_is_reassigned_to_same_resource()
     {
@@ -577,7 +600,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     alias.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -585,6 +608,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证 IDisposable 方法返回值未释放时会报告资源泄漏。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_leak_when_disposable_created_by_method_is_not_disposed()
     {
@@ -608,14 +632,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     var resource = new Factory().Create();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004",]);
     }
 
     /// <summary>
     /// 验证 IDisposable 方法返回值被释放后不会报告资源泄漏。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_when_disposable_created_by_method_is_disposed()
     {
@@ -640,7 +665,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -648,6 +673,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证标记为借用的方法返回值不能由调用方释放。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_disposal_when_method_returns_borrowed_disposable()
     {
@@ -677,14 +703,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006",]);
     }
 
     /// <summary>
     /// 验证标记为拥有的属性返回值需要由调用方释放。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_leak_when_property_returns_owned_disposable()
     {
@@ -710,14 +737,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     var resource = new Factory().Create;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004",]);
     }
 
     /// <summary>
     /// 验证属性的输入和输出所有权流分别作用于 setter 与 getter。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_apply_ownership_flows_to_property_setter_and_getter()
     {
@@ -750,14 +778,16 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     borrowed.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO003", "TAO006"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO003", "TAO006",]);
     }
 
     /// <summary>
     /// 验证从转移参数接收可释放字段的类和结构必须实现 IDisposable。
     /// </summary>
+    /// <param name="typeKind">The <paramref name="typeKind"/> value for the test case.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     [Arguments("class")]
     [Arguments("struct")]
@@ -779,14 +809,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                 public Session([Ownership(OwnershipKind.TRANSFERRED)] Resource resource)
                     => _resource = resource;
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO008"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO008",]);
     }
 
     /// <summary>
     /// 验证显式拥有的字段同样要求其所在类型实现 IDisposable。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_explicitly_owned_field_when_containing_type_is_not_disposable()
     {
@@ -806,14 +837,16 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
                 public Session(Resource resource) => _resource = resource;
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO008"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO008",]);
     }
 
     /// <summary>
     /// 验证拥有可释放字段的类和结构必须在 Dispose 中释放该字段。
     /// </summary>
+    /// <param name="typeKind">The <paramref name="typeKind"/> value for the test case.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     [Arguments("class")]
     [Arguments("struct")]
@@ -837,14 +870,16 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
                 public void Dispose() { }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO009"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO009",]);
     }
 
     /// <summary>
     /// 验证拥有可释放字段的类和结构在正确释放字段后不会报告诊断。
     /// </summary>
+    /// <param name="typeKind">The <paramref name="typeKind"/> value for the test case.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     [Arguments("class")]
     [Arguments("struct")]
@@ -868,7 +903,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
                 public void Dispose() => _resource.Dispose();
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -876,6 +911,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证借用字段不会要求所在类型实现 IDisposable，且不得由其释放。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_disposal_when_field_is_borrowed()
     {
@@ -897,14 +933,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
                 public void Dispose() => _resource.Dispose();
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006",]);
     }
 
     /// <summary>
     /// 验证静态可释放字段不归属于单个实例的释放生命周期。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_require_disposable_type_for_static_owned_field()
     {
@@ -922,7 +959,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
                 [Ownership(OwnershipKind.TRANSFERRED)]
                 private static readonly Resource Resource = new Resource();
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -930,6 +967,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证未标注的 out 参数默认向调用方交付所有权。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_track_out_disposable_as_owned_by_default()
     {
@@ -954,7 +992,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -962,6 +1000,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证标记为借用的 out 参数不能由调用方释放。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_disposal_when_out_parameter_returns_borrowed_disposable()
     {
@@ -990,14 +1029,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006",]);
     }
 
     /// <summary>
     /// 验证 ref 参数可以同时转移旧值的所有权并向调用方交付新值。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_track_ref_parameter_that_consumes_and_returns_owned_disposable()
     {
@@ -1031,7 +1071,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -1039,6 +1079,9 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证属性、方法、out 参数和普通参数均使用各自的默认所有权方向。
     /// </summary>
+    /// <param name="memberDeclarations">The <paramref name="memberDeclarations"/> value for the test case.</param>
+    /// <param name="expectedDiagnosticId">The <paramref name="expectedDiagnosticId"/> value for the test case.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     [Arguments("""
         sealed class Owner
@@ -1106,7 +1149,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
             }
 
             {{memberDeclarations}}
-            """);
+            """).ConfigureAwait(false);
 
         if (string.IsNullOrEmpty(expectedDiagnosticId))
         {
@@ -1114,12 +1157,13 @@ internal sealed class DisposableLifetimeAnalyzerTests
             return;
         }
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo([expectedDiagnosticId]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo([expectedDiagnosticId,]);
     }
 
     /// <summary>
     /// 验证 in 参数可显式将调用方资源的所有权转移给被调方。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_track_ownership_transfer_for_in_parameter()
     {
@@ -1146,14 +1190,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO003"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO003",]);
     }
 
     /// <summary>
     /// 验证 out 参数覆盖已有所有者时会报告旧资源泄漏。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_leak_when_out_parameter_overwrites_owned_resource()
     {
@@ -1179,14 +1224,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004",]);
     }
 
     /// <summary>
     /// 验证 ref 的输出转移不会隐式接管旧资源所有权。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_leak_when_ref_output_replaces_owned_resource_without_input_transfer()
     {
@@ -1215,14 +1261,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004",]);
     }
 
     /// <summary>
     /// 验证 ref 可转移输入资源并以借用资源作为输出。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_disposal_when_ref_output_is_borrowed()
     {
@@ -1259,14 +1306,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006",]);
     }
 
     /// <summary>
     /// 验证不能直接释放属性提供的借用资源。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_dispose_when_disposable_is_accessed_through_property()
     {
@@ -1290,14 +1338,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     new Owner().Resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006",]);
     }
 
     /// <summary>
     /// 验证不能通过局部变量释放属性提供的借用资源。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_dispose_when_property_resource_is_assigned_to_local()
     {
@@ -1322,14 +1371,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006",]);
     }
 
     /// <summary>
     /// 验证方法返回前释放将要返回的资源会报告错误。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_disposed_resource_when_method_returns_it()
     {
@@ -1350,14 +1400,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     return resource;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO007"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO007",]);
     }
 
     /// <summary>
     /// 验证通过别名返回已释放资源同样会报告错误。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_disposed_resource_when_method_returns_alias()
     {
@@ -1379,14 +1430,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     return alias;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO007"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO007",]);
     }
 
     /// <summary>
     /// 验证返回仍由当前方法拥有的资源会把所有权交给调用方而不报告泄漏。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_leak_when_method_returns_owned_disposable()
     {
@@ -1406,7 +1458,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     return resource;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -1414,6 +1466,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证 using、立即回调和所有权转移会完成资源生命周期而不报告错误。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_when_resource_lifetime_is_completed_safely()
     {
@@ -1447,7 +1500,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     disposedResource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -1455,6 +1508,9 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证通过接口转换或显式转换访问局部资源时仍能识别其释放状态。
     /// </summary>
+    /// <param name="statement">The <paramref name="statement"/> value for the test case.</param>
+    /// <param name="expectedDiagnosticId">The <paramref name="expectedDiagnosticId"/> value for the test case.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     [Arguments("IDisposable resource = new Resource(); resource.Dispose(); resource.Dispose();", "TAO001")]
     [Arguments("var resource = new Resource(); ((IDisposable)resource).Dispose(); resource.Use();", "TAO002")]
@@ -1476,14 +1532,16 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     {{statement}}
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo([expectedDiagnosticId]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo([expectedDiagnosticId,]);
     }
 
     /// <summary>
     /// 验证 using 声明、using 语句声明和 using 语句表达式都会接管资源生命周期。
     /// </summary>
+    /// <param name="statement">The <paramref name="statement"/> value for the test case.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     [Arguments("using var resource = new Resource();")]
     [Arguments("using (var resource = new Resource()) { }")]
@@ -1505,7 +1563,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     {{statement}}
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -1513,6 +1571,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
     /// <summary>
     /// 验证将属性借用资源赋给已拥有局部变量时，会先报告被覆盖实例的泄漏且仍禁止释放借用资源。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_leak_and_borrowed_disposal_when_owned_local_is_reassigned_from_property()
     {
@@ -1538,14 +1597,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     resource.Dispose();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006", "TAO011"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006", "TAO011",]);
     }
 
     /// <summary>
     /// 验证覆盖局部变量或拥有的字段前必须先释放原有资源。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_overwrite_when_owned_local_or_field_is_reassigned_before_release()
     {
@@ -1573,14 +1633,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     _field = new Resource();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO011", "TAO011"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO011", "TAO011",]);
     }
 
     /// <summary>
     /// 验证构造函数接管的字段被覆盖前同样必须先释放原有资源。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_overwrite_when_inferred_owned_field_is_reassigned_before_release()
     {
@@ -1603,14 +1664,17 @@ internal sealed class DisposableLifetimeAnalyzerTests
 
                 void Execute() => _field = new Resource();
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO011"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO011",]);
     }
 
     /// <summary>
     /// 验证覆盖拥有的可释放属性时会报告信息诊断，释放旧值后覆盖则不报告。
     /// </summary>
+    /// <param name="statements">The <paramref name="statements"/> value for the test case.</param>
+    /// <param name="expectedDiagnosticId">The <paramref name="expectedDiagnosticId"/> value for the test case.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     [Arguments("Resource = new Resource();", "TAO012")]
     [Arguments("Resource.Dispose(); Resource = new Resource();", "")]
@@ -1639,7 +1703,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     {{statements}}
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         if (string.IsNullOrEmpty(expectedDiagnosticId))
         {
@@ -1647,12 +1711,15 @@ internal sealed class DisposableLifetimeAnalyzerTests
             return;
         }
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo([expectedDiagnosticId]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo([expectedDiagnosticId,]);
     }
 
     /// <summary>
     /// 验证已释放或已转移的资源不能再次转移所有权。
     /// </summary>
+    /// <param name="statements">The <paramref name="statements"/> value for the test case.</param>
+    /// <param name="expectedDiagnosticId">The <paramref name="expectedDiagnosticId"/> value for the test case.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     [Arguments("resource.Dispose(); receiver.Attach(resource);", "TAO002")]
     [Arguments("receiver.Attach(resource); receiver.Attach(resource);", "TAO003")]
@@ -1681,14 +1748,17 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     {{statements}}
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo([expectedDiagnosticId]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo([expectedDiagnosticId,]);
     }
 
     /// <summary>
     /// 验证返回已转移或 using 管理的资源会报告无效生命周期。
     /// </summary>
+    /// <param name="statements">The <paramref name="statements"/> value for the test case.</param>
+    /// <param name="expectedDiagnosticId">The <paramref name="expectedDiagnosticId"/> value for the test case.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     [Arguments("var resource = new Resource(); new Receiver().Attach(resource); return resource;", "TAO003")]
     [Arguments("using var resource = new Resource(); return resource;", "TAO007")]
@@ -1715,14 +1785,16 @@ internal sealed class DisposableLifetimeAnalyzerTests
                     {{statements}}
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo([expectedDiagnosticId]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo([expectedDiagnosticId,]);
     }
 
     /// <summary>
     /// 验证构造器、属性访问器和局部函数等独立 operation block 都会分析未释放资源。
     /// </summary>
+    /// <param name="member">The <paramref name="member"/> value for the test case.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     [Arguments("Sample() { var resource = new Resource(); }")]
     [Arguments("int Value { get { var resource = new Resource(); return 0; } }")]
@@ -1741,16 +1813,16 @@ internal sealed class DisposableLifetimeAnalyzerTests
             {
                 {{member}}
             }
-            """);
+            """).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO004",]);
     }
 
     private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source, bool enableOwnershipAnalysis = true)
     {
         var compilation = CSharpCompilation.Create(
             assemblyName: "AnalyzerTests",
-            syntaxTrees: [CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Preview))],
+            syntaxTrees: [CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Preview)),],
             references: GetMetadataReferences(),
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
@@ -1764,7 +1836,7 @@ internal sealed class DisposableLifetimeAnalyzerTests
             ImmutableArray.Create<DiagnosticAnalyzer>(analyzer),
             LifetimeAnalyzerTestHelper.CreateAnalyzerOptions(enableOwnershipAnalysis));
 
-        return await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync();
+        return await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 
     private static ImmutableArray<MetadataReference> GetMetadataReferences()

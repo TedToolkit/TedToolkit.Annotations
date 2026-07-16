@@ -5,5 +5,7 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute"><_Parameter1>TedToolkit.Annotations.Maintenance.Tests</_Parameter1></AssemblyAttribute>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp"><PrivateAssets>all</PrivateAssets></PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces"><PrivateAssets>all</PrivateAssets></PackageReference>
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
   </ItemGroup>
 </Project>

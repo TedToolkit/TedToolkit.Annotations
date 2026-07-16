@@ -15,15 +15,31 @@ using TedToolkit.Annotations.Const;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Const;
 
+/// <summary>
+/// Provides shared functionality for const analyzer test helper.
+/// </summary>
 internal static class ConstAnalyzerTestHelper
 {
-    internal static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(
+    /// <summary>
+    /// Analyzes source with const analysis enabled.
+    /// </summary>
+    /// <param name="source">The source code to analyze.</param>
+    /// <param name="additionalReferences">Additional compilation references.</param>
+    /// <returns>The analyzer diagnostics.</returns>
+    internal static Task<ImmutableArray<Diagnostic>> AnalyzeAsync(
         string source,
         params MetadataReference[] additionalReferences)
     {
-        return await AnalyzeAsync(source, enableConstAnalysis: true, additionalReferences: additionalReferences);
+        return AnalyzeAsync(source, enableConstAnalysis: true, additionalReferences: additionalReferences);
     }
 
+    /// <summary>
+    /// Analyzes source with the requested const-analysis setting.
+    /// </summary>
+    /// <param name="source">The source code to analyze.</param>
+    /// <param name="enableConstAnalysis">Whether const analysis is enabled.</param>
+    /// <param name="additionalReferences">Additional compilation references.</param>
+    /// <returns>The analyzer diagnostics.</returns>
     internal static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(
         string source,
         bool enableConstAnalysis,
@@ -39,9 +55,14 @@ internal static class ConstAnalyzerTestHelper
             .WithAnalyzers(
                 ImmutableArray.Create<DiagnosticAnalyzer>(new ConstMutationAnalyzer()),
                 CreateAnalyzerOptions(enableConstAnalysis))
-            .GetAnalyzerDiagnosticsAsync();
+            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Creates analyzer options for the requested const-analysis setting.
+    /// </summary>
+    /// <param name="enableConstAnalysis">Whether const analysis is enabled.</param>
+    /// <returns>The configured analyzer options.</returns>
     internal static AnalyzerOptions CreateAnalyzerOptions(bool enableConstAnalysis)
     {
         var options = enableConstAnalysis
@@ -49,9 +70,15 @@ internal static class ConstAnalyzerTestHelper
                 ConstAnalysisOptions.ENABLE_CONST_ANALYSIS_PROPERTY_NAME,
                 bool.TrueString)
             : ImmutableDictionary<string, string>.Empty;
-        return new AnalyzerOptions([], new TestAnalyzerConfigOptionsProvider(options));
+        return new([], new TestAnalyzerConfigOptionsProvider(options));
     }
 
+    /// <summary>
+    /// Compiles source code into an in-memory metadata reference.
+    /// </summary>
+    /// <param name="source">The source code to compile.</param>
+    /// <returns>The compiled metadata reference.</returns>
+    /// <exception cref="InvalidOperationException">The source code cannot be compiled.</exception>
     internal static MetadataReference CompileReference(string source)
     {
         using var stream = new MemoryStream();
@@ -71,7 +98,7 @@ internal static class ConstAnalyzerTestHelper
     {
         return CSharpCompilation.Create(
             "ConstAnalyzerTests",
-            [CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Preview))],
+            [CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Preview)),],
             GetMetadataReferences().AddRange(additionalReferences),
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary).WithAllowUnsafe(true));
     }
@@ -91,15 +118,24 @@ internal static class ConstAnalyzerTestHelper
     {
         public override AnalyzerConfigOptions GlobalOptions { get; } = new TestAnalyzerConfigOptions(globalOptions);
 
-        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree) => Empty;
+        public override AnalyzerConfigOptions GetOptions(SyntaxTree tree)
+        {
+            return Empty;
+        }
 
-        public override AnalyzerConfigOptions GetOptions(AdditionalText textFile) => Empty;
+        public override AnalyzerConfigOptions GetOptions(AdditionalText textFile)
+        {
+            return Empty;
+        }
 
         private static AnalyzerConfigOptions Empty { get; } = new TestAnalyzerConfigOptions([]);
     }
 
     private sealed class TestAnalyzerConfigOptions(ImmutableDictionary<string, string> options) : AnalyzerConfigOptions
     {
-        public override bool TryGetValue(string key, out string value) => options.TryGetValue(key, out value!);
+        public override bool TryGetValue(string key, out string value)
+        {
+            return options.TryGetValue(key, out value!);
+        }
     }
 }

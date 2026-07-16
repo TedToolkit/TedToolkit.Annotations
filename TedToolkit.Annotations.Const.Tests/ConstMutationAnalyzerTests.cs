@@ -6,6 +6,7 @@
 // -----------------------------------------------------------------------
 
 using System.Collections.Immutable;
+using System.Globalization;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -16,11 +17,15 @@ using TedToolkit.Annotations.Const;
 
 namespace TedToolkit.Annotations.Analyzer.Tests;
 
+/// <summary>
+/// Contains tests for const mutation analyzer.
+/// </summary>
 internal sealed class ConstMutationAnalyzerTests
 {
     /// <summary>
     /// 验证未在项目中显式启用时不执行 Const 检查。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_run_const_analysis_by_default()
     {
@@ -32,7 +37,7 @@ internal sealed class ConstMutationAnalyzerTests
                 [Const]
                 void Mutate([Const] object value) => value = new object();
             }
-            """, enableConstAnalysis: false);
+            """, enableConstAnalysis: false).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -40,6 +45,7 @@ internal sealed class ConstMutationAnalyzerTests
     /// <summary>
     /// 验证分析器会报告参数和实例成员受保护深度上的写入。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_mutations_at_protected_parameter_and_method_depths()
     {
@@ -69,7 +75,7 @@ internal sealed class ConstMutationAnalyzerTests
                     Child.Value = 1;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -79,14 +85,24 @@ internal sealed class ConstMutationAnalyzerTests
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
         ]);
-        await Assert.That(diagnostics.Any(diagnostic => diagnostic.GetMessage().Contains("depth 0", StringComparison.Ordinal))).IsTrue();
-        await Assert.That(diagnostics.Any(diagnostic => diagnostic.GetMessage().Contains("depth 1", StringComparison.Ordinal))).IsTrue();
-        await Assert.That(diagnostics.Any(diagnostic => diagnostic.GetMessage().Contains("depth 2", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(
+            diagnostics.Any(
+                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
+                    .Contains("depth 0", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(
+            diagnostics.Any(
+                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
+                    .Contains("depth 1", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(
+            diagnostics.Any(
+                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
+                    .Contains("depth 2", StringComparison.Ordinal))).IsTrue();
     }
 
     /// <summary>
     /// 验证未选中的深度允许写入而选中的深度仍会报告。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_allow_mutations_at_unprotected_depths()
     {
@@ -113,7 +129,7 @@ internal sealed class ConstMutationAnalyzerTests
                     Child.Value = 1;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -123,8 +139,9 @@ internal sealed class ConstMutationAnalyzerTests
     }
 
     /// <summary>
-    /// 验证普通局部变量和 ref 局部变量都会继承 Const.Local 的深度约束。
+    /// 验证普通局部变量和 ref 局部变量都会继承 AsConst.Local 的深度约束。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_mutations_of_const_local_and_ref_local_variables()
     {
@@ -140,14 +157,14 @@ internal sealed class ConstMutationAnalyzerTests
             {
                 public void Mutate(ref Child source)
                 {
-                    var local = Const.Local(source, ConstDepth.DEPTH1);
-                    ref var alias = ref Const.Local(ref source, ConstDepth.DEPTH1);
+                    var local = AsConst.Local(source, ConstDepth.DEPTH1);
+                    ref var alias = ref AsConst.Local(ref source, ConstDepth.DEPTH1);
 
                     local.Value = 1;
                     alias.Value = 1;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -159,6 +176,7 @@ internal sealed class ConstMutationAnalyzerTests
     /// <summary>
     /// 验证 Const 特性应用于 out 参数会报告配置错误且不报告写入错误。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_error_when_const_is_applied_to_out_parameter()
     {
@@ -176,7 +194,7 @@ internal sealed class ConstMutationAnalyzerTests
                     child = new Child();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -187,6 +205,7 @@ internal sealed class ConstMutationAnalyzerTests
     /// <summary>
     /// 验证未标注的属性访问器默认约束 getter 的全部深度及 setter 的第一层以上深度。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_apply_default_const_contracts_to_property_accessors()
     {
@@ -217,7 +236,7 @@ internal sealed class ConstMutationAnalyzerTests
                     }
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -225,13 +244,20 @@ internal sealed class ConstMutationAnalyzerTests
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
         ]);
-        await Assert.That(diagnostics.Any(diagnostic => diagnostic.GetMessage().Contains("depth 0", StringComparison.Ordinal))).IsTrue();
-        await Assert.That(diagnostics.Any(diagnostic => diagnostic.GetMessage().Contains("depth 1", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(
+            diagnostics.Any(
+                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
+                    .Contains("depth 0", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(
+            diagnostics.Any(
+                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
+                    .Contains("depth 1", StringComparison.Ordinal))).IsTrue();
     }
 
     /// <summary>
     /// 验证属性和访问器上的 Const 特性会覆盖属性访问器的默认约束。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_use_property_and_accessor_const_contracts()
     {
@@ -282,7 +308,7 @@ internal sealed class ConstMutationAnalyzerTests
                     }
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -296,6 +322,7 @@ internal sealed class ConstMutationAnalyzerTests
     /// <summary>
     /// 验证普通局部变量别名会继承受保护对象图的深度。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_mutations_through_local_aliases()
     {
@@ -320,20 +347,27 @@ internal sealed class ConstMutationAnalyzerTests
                     nestedAlias.Value = 1;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
         ]);
-        await Assert.That(diagnostics.Any(diagnostic => diagnostic.GetMessage().Contains("depth 1", StringComparison.Ordinal))).IsTrue();
-        await Assert.That(diagnostics.Any(diagnostic => diagnostic.GetMessage().Contains("depth 2", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(
+            diagnostics.Any(
+                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
+                    .Contains("depth 1", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(
+            diagnostics.Any(
+                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
+                    .Contains("depth 2", StringComparison.Ordinal))).IsTrue();
     }
 
     /// <summary>
     /// 验证引用类型别名继承 Const 约束，而值类型复制和对复制的写入保持允许。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_track_reference_aliases_but_allow_value_type_copies()
     {
@@ -363,7 +397,7 @@ internal sealed class ConstMutationAnalyzerTests
                     valueReference.Value = 1;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -375,6 +409,7 @@ internal sealed class ConstMutationAnalyzerTests
     /// <summary>
     /// 验证数组元素写入及其成员写入会计入对象图深度。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_mutations_of_protected_array_elements()
     {
@@ -394,20 +429,27 @@ internal sealed class ConstMutationAnalyzerTests
                     nodes[0].Value = 1;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
         ]);
-        await Assert.That(diagnostics.Any(diagnostic => diagnostic.GetMessage().Contains("depth 1", StringComparison.Ordinal))).IsTrue();
-        await Assert.That(diagnostics.Any(diagnostic => diagnostic.GetMessage().Contains("depth 2", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(
+            diagnostics.Any(
+                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
+                    .Contains("depth 1", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(
+            diagnostics.Any(
+                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
+                    .Contains("depth 2", StringComparison.Ordinal))).IsTrue();
     }
 
     /// <summary>
     /// 验证合并赋值、解构赋值、事件订阅和可写引用传递不会绕过 Const 约束。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_all_supported_mutation_operations_at_protected_depths()
     {
@@ -449,7 +491,7 @@ internal sealed class ConstMutationAnalyzerTests
                     value = 0;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -466,6 +508,7 @@ internal sealed class ConstMutationAnalyzerTests
     /// <summary>
     /// 验证属性的 init 访问器保留 setter 的默认深度一以上约束。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_apply_setter_default_contract_to_init_accessor()
     {
@@ -490,18 +533,19 @@ internal sealed class ConstMutationAnalyzerTests
                     }
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
         ]);
-        await Assert.That(diagnostics.Single().GetMessage()).Contains("depth 1");
+        await Assert.That(diagnostics.Single().GetMessage(CultureInfo.InvariantCulture)).Contains("depth 1");
     }
 
     /// <summary>
     /// 验证分支和循环汇合会保留所有可能的 Const 引用别名。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_merge_possible_aliases_across_branches_and_loops()
     {
@@ -539,7 +583,7 @@ internal sealed class ConstMutationAnalyzerTests
                     loopAlias.Value = 2;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -551,6 +595,7 @@ internal sealed class ConstMutationAnalyzerTests
     /// <summary>
     /// 验证条件表达式、空合并表达式和 foreach 元素不会丢失 Const 引用来源。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_track_conditional_coalesce_and_foreach_aliases()
     {
@@ -579,7 +624,7 @@ internal sealed class ConstMutationAnalyzerTests
                     }
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -588,12 +633,16 @@ internal sealed class ConstMutationAnalyzerTests
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
         ]);
-        await Assert.That(diagnostics.Any(diagnostic => diagnostic.GetMessage().Contains("depth 2", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(
+            diagnostics.Any(
+                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
+                    .Contains("depth 2", StringComparison.Ordinal))).IsTrue();
     }
 
     /// <summary>
-    /// 验证 Const.Local 只允许直接初始化局部变量并要求编译期常量深度。
+    /// 验证 AsConst.Local 只允许直接初始化局部变量并要求编译期常量深度。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_invalid_const_local_context_and_dynamic_depth()
     {
@@ -608,15 +657,15 @@ internal sealed class ConstMutationAnalyzerTests
             {
                 public void Mutate(Node node, ConstDepth depths)
                 {
-                    var local = Const.Local(node, depths);
-                    Consume(Const.Local(node));
+                    var local = AsConst.Local(node, depths);
+                    Consume(AsConst.Local(node));
                 }
 
                 private static void Consume(Node node)
                 {
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -628,6 +677,7 @@ internal sealed class ConstMutationAnalyzerTests
     /// <summary>
     /// 验证 Const 特性可应用于静态属性的 Current-or-throw 模式。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_allow_const_contract_on_static_current_or_error_property()
     {
@@ -650,7 +700,7 @@ internal sealed class ConstMutationAnalyzerTests
                     }
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -658,6 +708,7 @@ internal sealed class ConstMutationAnalyzerTests
     /// <summary>
     /// 验证静态方法和静态属性会以其声明类型的静态状态作为 Const 深度根节点。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_mutations_of_static_state_at_protected_depths()
     {
@@ -692,19 +743,23 @@ internal sealed class ConstMutationAnalyzerTests
                     }
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
         ]);
-        await Assert.That(diagnostics.All(diagnostic => diagnostic.GetMessage().Contains("depth 1", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(
+            diagnostics.All(
+                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
+                    .Contains("depth 1", StringComparison.Ordinal))).IsTrue();
     }
 
     /// <summary>
     /// 验证深度零会保护静态类型根节点上的字段、属性和事件。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_direct_static_state_mutations_when_depth_zero_is_protected()
     {
@@ -732,7 +787,7 @@ internal sealed class ConstMutationAnalyzerTests
                 {
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -740,12 +795,16 @@ internal sealed class ConstMutationAnalyzerTests
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
         ]);
-        await Assert.That(diagnostics.All(diagnostic => diagnostic.GetMessage().Contains("depth 0", StringComparison.Ordinal))).IsTrue();
+        await Assert.That(
+            diagnostics.All(
+                diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture)
+                    .Contains("depth 0", StringComparison.Ordinal))).IsTrue();
     }
 
     /// <summary>
     /// 验证静态属性访问器继承 getter 和 setter 的默认 Const 深度。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_apply_default_const_contracts_to_static_property_accessors()
     {
@@ -775,7 +834,7 @@ internal sealed class ConstMutationAnalyzerTests
                     }
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -783,13 +842,18 @@ internal sealed class ConstMutationAnalyzerTests
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
             ConstMutationAnalyzer.DIAGNOSTIC_ID,
         ]);
-        await Assert.That(diagnostics.Count(diagnostic => diagnostic.GetMessage().Contains("depth 0", StringComparison.Ordinal))).IsEqualTo(1);
-        await Assert.That(diagnostics.Count(diagnostic => diagnostic.GetMessage().Contains("depth 1", StringComparison.Ordinal))).IsEqualTo(2);
+        await Assert.That(diagnostics.Count(
+            diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("depth 0", StringComparison.Ordinal)))
+            .IsEqualTo(1);
+        await Assert.That(diagnostics.Count(
+            diagnostic => diagnostic.GetMessage(CultureInfo.InvariantCulture).Contains("depth 1", StringComparison.Ordinal)))
+            .IsEqualTo(2);
     }
 
     /// <summary>
     /// 验证静态 Const 契约不会覆盖其他声明类型的静态状态。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_mutations_of_static_state_owned_by_another_type()
     {
@@ -809,7 +873,7 @@ internal sealed class ConstMutationAnalyzerTests
                     Other.Value = 1;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -817,6 +881,7 @@ internal sealed class ConstMutationAnalyzerTests
     /// <summary>
     /// 验证重写方法和接口实现会继承方法及参数上的 Const 契约。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_inherit_const_contracts_from_base_and_interface_methods()
     {
@@ -853,7 +918,7 @@ internal sealed class ConstMutationAnalyzerTests
                     Value = 1;
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -865,6 +930,7 @@ internal sealed class ConstMutationAnalyzerTests
     /// <summary>
     /// 验证接口属性的 Const 契约会由隐式实现的访问器继承。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_inherit_const_contracts_from_interface_properties()
     {
@@ -890,7 +956,7 @@ internal sealed class ConstMutationAnalyzerTests
                     }
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(
         [
@@ -917,7 +983,7 @@ internal sealed class ConstMutationAnalyzerTests
         var compilationWithAnalyzers = compilation.WithAnalyzers(
             ImmutableArray.Create<DiagnosticAnalyzer>(new ConstMutationAnalyzer()),
             ConstAnalyzerTestHelper.CreateAnalyzerOptions(enableConstAnalysis));
-        return await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync();
+        return await compilationWithAnalyzers.GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 
     private static ImmutableArray<MetadataReference> GetMetadataReferences()

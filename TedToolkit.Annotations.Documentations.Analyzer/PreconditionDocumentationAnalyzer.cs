@@ -25,23 +25,12 @@ public sealed class PreconditionDocumentationAnalyzer : DiagnosticAnalyzer
     /// </summary>
     public const string DIAGNOSTIC_ID = "TAD200";
 
-    /// <summary>
-    /// Describes available precondition exception documentation.
-    /// </summary>
-    public static readonly DiagnosticDescriptor DocumentationCanBeGenerated = new(
-        "TAD200",
-        DiagnosticResources.Get("PreconditionDocumentationTitle"),
-        DiagnosticResources.Get("PreconditionDocumentationMessage"),
-        "Documentation",
-        DiagnosticSeverity.Info,
-        isEnabledByDefault: true);
-
     /// <inheritdoc />
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
     {
         get
         {
-            return ImmutableArray.Create(DocumentationCanBeGenerated);
+            return ImmutableArray.Create(DocumentationDiagnostics.PreconditionDocumentation);
         }
     }
 
@@ -67,6 +56,6 @@ public sealed class PreconditionDocumentationAnalyzer : DiagnosticAnalyzer
             return;
         }
 
-        context.ReportDiagnostic(Diagnostic.Create(DocumentationCanBeGenerated, member.GetLocation()));
+        context.ReportDiagnostic(Diagnostic.Create(DocumentationDiagnostics.PreconditionDocumentation, member.GetLocation()));
     }
 }

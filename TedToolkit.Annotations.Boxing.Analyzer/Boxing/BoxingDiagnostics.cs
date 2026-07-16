@@ -15,7 +15,7 @@ namespace TedToolkit.Annotations.Analyzer.Boxing;
 internal static class BoxingDiagnostics
 {
     /// <summary>
-    /// Reports a boxing conversion that should be expressed through <c>Boxing.Box</c>.
+    /// Reports a boxing conversion that should be expressed through <c>Boxer.Box</c>.
     /// </summary>
     internal static readonly DiagnosticDescriptor BoxingMustBeExplicit = CreateDiagnostic(BoxingAnalyzer.DIAGNOSTIC_ID);
 

@@ -9,11 +9,15 @@ using TedToolkit.Annotations.Const;
 
 namespace TedToolkit.Annotations.Analyzer.Tests;
 
+/// <summary>
+/// Contains tests for const attribute.
+/// </summary>
 internal sealed class ConstAttributeTests
 {
     /// <summary>
     /// 验证默认构造的 Const 特性保护全部三十二个深度。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_protect_all_32_depths_when_depths_are_omitted()
     {
@@ -26,6 +30,7 @@ internal sealed class ConstAttributeTests
     /// <summary>
     /// 验证深度枚举的每个成员都映射到唯一的三十二位掩码位。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_map_each_depth_to_its_corresponding_bit()
     {
@@ -40,10 +45,11 @@ internal sealed class ConstAttributeTests
     /// <summary>
     /// 验证 Const 特性可显式限制受保护的对象图深度。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_preserve_explicit_depth_mask_when_constructed()
     {
-        var expected = ConstDepth.DEPTH0 | ConstDepth.DEPTH2 | ConstDepth.DEPTH31;
+        const ConstDepth expected = ConstDepth.DEPTH0 | ConstDepth.DEPTH2 | ConstDepth.DEPTH31;
         var attribute = new ConstAttribute(expected);
 
         await Assert.That(attribute.Depths).IsEqualTo(expected);
@@ -52,6 +58,9 @@ internal sealed class ConstAttributeTests
     /// <summary>
     /// 验证大于等于深度掩码会保护其起始深度及全部更深层级。
     /// </summary>
+    /// <param name="depths">The <paramref name="depths"/> value for the test case.</param>
+    /// <param name="expectedMask">The <paramref name="expectedMask"/> value for the test case.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     [Arguments(ConstDepth.DEPTH0_OR_GREATER, uint.MaxValue)]
     [Arguments(ConstDepth.DEPTH1_OR_GREATER, 0xFFFFFFFEU)]
@@ -67,6 +76,7 @@ internal sealed class ConstAttributeTests
     /// <summary>
     /// 验证每个大于等于和小于等于深度掩码均覆盖正确的连续位范围。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_map_all_contiguous_depth_masks_to_expected_bits()
     {

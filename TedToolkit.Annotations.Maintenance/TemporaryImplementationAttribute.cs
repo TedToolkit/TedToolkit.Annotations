@@ -11,5 +11,5 @@ namespace TedToolkit.Annotations.Maintenance;
 /// Marks a deliberately incomplete implementation.
 /// </summary>
 /// <param name="reason">The reason this implementation is temporary.</param>
-public class TemporaryImplementationAttribute(string reason)
+public sealed class TemporaryImplementationAttribute(string reason)
     : MaintenanceAttribute(reason);

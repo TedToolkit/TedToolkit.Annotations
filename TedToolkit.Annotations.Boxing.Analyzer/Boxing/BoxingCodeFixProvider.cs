@@ -19,7 +19,7 @@ using Microsoft.CodeAnalysis.Operations;
 namespace TedToolkit.Annotations.Analyzer;
 
 /// <summary>
-/// Replaces boxing conversions with an <c>Boxing.Box</c> invocation.
+/// Replaces boxing conversions with an <c>Boxer.Box</c> invocation.
 /// </summary>
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(BoxingCodeFixProvider))]
 [Shared]
@@ -75,8 +75,8 @@ public sealed class BoxingCodeFixProvider : CodeFixProvider
         var targetType = conversion.Type?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var sourceType = GetBoxSourceType(conversion.Operand.Type)?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var methodName = conversion.Type?.SpecialType == SpecialType.System_Object
-            ? "global::TedToolkit.Annotations.Boxing.Boxing.Box"
-            : $"global::TedToolkit.Annotations.Boxing.Boxing.Box<{targetType}, {sourceType}>";
+            ? "global::TedToolkit.Annotations.Boxing.Boxer.Box"
+            : $"global::TedToolkit.Annotations.Boxing.Boxer.Box<{targetType}, {sourceType}>";
         var invocation = SyntaxFactory.InvocationExpression(
                 SyntaxFactory.ParseExpression(methodName),
                 SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(

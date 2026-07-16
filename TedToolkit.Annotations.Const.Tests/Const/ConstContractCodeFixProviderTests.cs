@@ -18,11 +18,15 @@ using TedToolkit.Annotations.Const;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Const;
 
+/// <summary>
+/// Contains tests for const contract code fix provider.
+/// </summary>
 internal sealed class ConstContractCodeFixProviderTests
 {
     /// <summary>
     /// 验证修复会根据接收者和实参访问深度生成方法及参数 Const 契约。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_generate_method_and_parameter_contracts_when_annotated_calls_require_them()
     {
@@ -50,7 +54,7 @@ internal sealed class ConstContractCodeFixProviderTests
                     Validate(node.Child);
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(updatedSource).Contains("[Const(ConstDepth.DEPTH1_OR_LOWER)]\n    void Inspect");
         await Assert.That(updatedSource).Contains("void Inspect([Const(ConstDepth.DEPTH2)] Node node)");
@@ -59,6 +63,7 @@ internal sealed class ConstContractCodeFixProviderTests
     /// <summary>
     /// 验证修复会将全部深度掩码简化为无参数的 Const 特性。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_omit_depth_argument_when_inferred_contract_protects_all_depths()
     {
@@ -77,7 +82,7 @@ internal sealed class ConstContractCodeFixProviderTests
 
                 void Inspect() => cache.Read();
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(updatedSource).Contains("[Const]\n    void Inspect");
     }
@@ -85,6 +90,7 @@ internal sealed class ConstContractCodeFixProviderTests
     /// <summary>
     /// 验证调用未标注 Const 的方法时不会提供契约生成修复。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_offer_fix_when_an_invoked_method_has_no_const_contract()
     {
@@ -95,7 +101,7 @@ internal sealed class ConstContractCodeFixProviderTests
 
                 private void Inspect() => Mutate();
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(diagnostics.Where(candidate => candidate.Id == ConstContractInferenceAnalyzer.DIAGNOSTIC_ID)).IsEmpty();
     }
@@ -103,6 +109,7 @@ internal sealed class ConstContractCodeFixProviderTests
     /// <summary>
     /// 验证多个不连续深度会合并为按位或的 ConstDepth 表达式。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_combine_disjoint_depths_when_multiple_invocations_require_them()
     {
@@ -123,7 +130,7 @@ internal sealed class ConstContractCodeFixProviderTests
                     InspectNestedState();
                 }
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(updatedSource).Contains(
             "ConstDepth.DEPTH0 | ConstDepth.DEPTH2");
@@ -132,6 +139,8 @@ internal sealed class ConstContractCodeFixProviderTests
     /// <summary>
     /// 验证连续深度掩码会保留为对应的边界枚举成员。
     /// </summary>
+    /// <param name="depthName">The <paramref name="depthName"/> value for the test case.</param>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     [Arguments("DEPTH1_OR_GREATER")]
     [Arguments("DEPTH2_OR_LOWER")]
@@ -147,7 +156,7 @@ internal sealed class ConstContractCodeFixProviderTests
 
                 private void Inspect() => InspectState();
             }
-            """);
+            """).ConfigureAwait(false);
 
         await Assert.That(updatedSource).Contains(
             $"ConstDepth.{depthName}");
@@ -167,25 +176,26 @@ internal sealed class ConstContractCodeFixProviderTests
         workspace.TryApplyChanges(solution);
 
         var document = workspace.CurrentSolution.GetDocument(documentId)!;
-        var diagnostic = (await AnalyzeAsync(document)).Single(candidate => candidate.Id == ConstContractInferenceAnalyzer.DIAGNOSTIC_ID);
+        var diagnostic = (await AnalyzeAsync(document).ConfigureAwait(false)).Single(
+            candidate => candidate.Id == ConstContractInferenceAnalyzer.DIAGNOSTIC_ID);
         var actions = new List<CodeAction>();
         await new ConstContractCodeFixProvider().RegisterCodeFixesAsync(
-            new CodeFixContext(document, diagnostic, (action, _) => actions.Add(action), CancellationToken.None));
+            new CodeFixContext(document, diagnostic, (action, _) => actions.Add(action), CancellationToken.None)).ConfigureAwait(false);
         await Assert.That(actions).Count().IsEqualTo(1);
 
-        var operations = await actions[0].GetOperationsAsync(CancellationToken.None);
+        var operations = await actions[0].GetOperationsAsync(CancellationToken.None).ConfigureAwait(false);
         var updatedDocument = operations.OfType<ApplyChangesOperation>().Single().ChangedSolution.GetDocument(documentId)!;
-        return (await updatedDocument.GetTextAsync()).ToString();
+        return (await updatedDocument.GetTextAsync().ConfigureAwait(false)).ToString();
     }
 
     private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(Document document)
     {
-        var compilation = await document.Project.GetCompilationAsync();
+        var compilation = await document.Project.GetCompilationAsync().ConfigureAwait(false);
         return await compilation!
             .WithAnalyzers(
                 ImmutableArray.Create<DiagnosticAnalyzer>(new ConstContractInferenceAnalyzer()),
                 ConstAnalyzerTestHelper.CreateAnalyzerOptions(enableConstAnalysis: true))
-            .GetAnalyzerDiagnosticsAsync();
+            .GetAnalyzerDiagnosticsAsync().ConfigureAwait(false);
     }
 
     private static async Task<ImmutableArray<Diagnostic>> AnalyzeAsync(string source)
@@ -201,7 +211,7 @@ internal sealed class ConstContractCodeFixProviderTests
             .AddDocument(documentId, "Sample.cs", SourceText.From(source));
         workspace.TryApplyChanges(solution);
 
-        return await AnalyzeAsync(workspace.CurrentSolution.GetDocument(documentId)!);
+        return await AnalyzeAsync(workspace.CurrentSolution.GetDocument(documentId)!).ConfigureAwait(false);
     }
 
     private static ImmutableArray<MetadataReference> GetMetadataReferences()

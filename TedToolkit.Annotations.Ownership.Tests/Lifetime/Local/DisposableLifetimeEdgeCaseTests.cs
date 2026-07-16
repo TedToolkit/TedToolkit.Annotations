@@ -9,11 +9,15 @@ using TedToolkit.Annotations.Analyzer.Tests.Lifetime;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Lifetime.Local;
 
+/// <summary>
+/// Contains tests for disposable lifetime edge case.
+/// </summary>
 internal sealed class DisposableLifetimeEdgeCaseTests
 {
     /// <summary>
     /// 验证 using 不能释放从属性借用的资源。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_borrowed_disposal_when_borrowed_resource_enters_using()
     {
@@ -30,14 +34,15 @@ internal sealed class DisposableLifetimeEdgeCaseTests
                     using var resource = holder.Resource;
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006",]);
     }
 
     /// <summary>
     /// 验证 await using 不能释放从属性借用的异步资源。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_report_borrowed_disposal_when_borrowed_resource_enters_await_using()
     {
@@ -54,14 +59,15 @@ internal sealed class DisposableLifetimeEdgeCaseTests
                     await using var resource = holder.Resource;
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
-        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006"]);
+        await Assert.That(diagnostics.Select(diagnostic => diagnostic.Id)).IsEquivalentTo(["TAO006",]);
     }
 
     /// <summary>
     /// 验证 out 参数覆盖旧变量时不会把旧值读取为一次非法使用。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_not_report_use_when_out_parameter_overwrites_disposed_local()
     {
@@ -78,7 +84,7 @@ internal sealed class DisposableLifetimeEdgeCaseTests
                     resource.Dispose();
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -86,6 +92,7 @@ internal sealed class DisposableLifetimeEdgeCaseTests
     /// <summary>
     /// 验证异步释放结果通过局部别名等待后会被视为已观察。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_observe_async_release_through_result_alias()
     {
@@ -100,7 +107,7 @@ internal sealed class DisposableLifetimeEdgeCaseTests
                     await second;
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -108,6 +115,7 @@ internal sealed class DisposableLifetimeEdgeCaseTests
     /// <summary>
     /// 验证组合等待多个异步释放结果时所有结果都会被视为已观察。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_observe_async_releases_inside_when_all()
     {
@@ -121,7 +129,7 @@ internal sealed class DisposableLifetimeEdgeCaseTests
                     await Task.WhenAll(first.DisposeAsync().AsTask(), second.DisposeAsync().AsTask());
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -129,6 +137,7 @@ internal sealed class DisposableLifetimeEdgeCaseTests
     /// <summary>
     /// 验证同步等待异步释放结果时会被视为已观察。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_observe_async_release_through_get_result()
     {
@@ -141,7 +150,7 @@ internal sealed class DisposableLifetimeEdgeCaseTests
                     resource.DisposeAsync().GetAwaiter().GetResult();
                 }
             }
-            """));
+            """)).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }

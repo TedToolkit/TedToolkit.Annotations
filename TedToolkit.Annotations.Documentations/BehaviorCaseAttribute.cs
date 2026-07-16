@@ -22,7 +22,7 @@ namespace TedToolkit.Annotations.Documentations;
     AllowMultiple = true,
     Inherited = false)]
 [Conditional("ANNOTATIONS_BEHAVIOR_CASE")]
-public class BehaviorCaseAttribute(
+public sealed class BehaviorCaseAttribute(
     string condition,
     string expected,
     bool hasUnitTest = false,

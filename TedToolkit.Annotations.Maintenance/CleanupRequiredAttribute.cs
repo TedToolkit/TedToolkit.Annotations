@@ -11,4 +11,4 @@ namespace TedToolkit.Annotations.Maintenance;
 /// Marks code that is correct but should be simplified, removed, or reorganized.
 /// </summary>
 /// <param name="reason">The cleanup work that is required.</param>
-public class CleanupRequiredAttribute(string reason) : MaintenanceAttribute(reason);
+public sealed class CleanupRequiredAttribute(string reason) : MaintenanceAttribute(reason);

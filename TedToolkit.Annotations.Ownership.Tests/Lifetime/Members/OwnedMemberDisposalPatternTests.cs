@@ -9,11 +9,15 @@ using TedToolkit.Annotations.Analyzer.Tests.Lifetime;
 
 namespace TedToolkit.Annotations.Analyzer.Tests.Lifetime.Members;
 
+/// <summary>
+/// Contains tests for owned member disposal pattern.
+/// </summary>
 internal sealed class OwnedMemberDisposalPatternTests
 {
     /// <summary>
     /// 验证 Dispose 委托给 DisposeCore 时会识别辅助方法释放的字段。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_recognize_owned_field_release_in_dispose_helper()
     {
@@ -27,7 +31,7 @@ internal sealed class OwnedMemberDisposalPatternTests
 
                 private void DisposeCore() => _resource?.Dispose();
             }
-            """));
+            """)).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -35,6 +39,7 @@ internal sealed class OwnedMemberDisposalPatternTests
     /// <summary>
     /// 验证 DisposeAsync 委托给 DisposeAsyncCore 时会识别辅助方法释放的字段。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_recognize_owned_field_release_in_dispose_async_helper()
     {
@@ -53,7 +58,7 @@ internal sealed class OwnedMemberDisposalPatternTests
 
                 private ValueTask DisposeAsyncCore() => _resource.DisposeAsync();
             }
-            """));
+            """)).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }
@@ -61,6 +66,7 @@ internal sealed class OwnedMemberDisposalPatternTests
     /// <summary>
     /// 验证空值条件释放拥有属性时不会报告未释放。
     /// </summary>
+    /// <returns>A task that represents the asynchronous test operation.</returns>
     [Test]
     public async Task Should_recognize_null_conditional_release_of_owned_property()
     {
@@ -72,7 +78,7 @@ internal sealed class OwnedMemberDisposalPatternTests
 
                 public void Dispose() => Resource?.Dispose();
             }
-            """));
+            """)).ConfigureAwait(false);
 
         await Assert.That(diagnostics).IsEmpty();
     }

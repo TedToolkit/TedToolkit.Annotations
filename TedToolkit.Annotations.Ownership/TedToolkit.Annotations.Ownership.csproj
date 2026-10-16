@@ -5,6 +5,7 @@
   <PropertyGroup>
     <Title>Ownership annotations</Title>
     <Description>Ownership and callback-lifetime annotations for disposable resources.</Description>
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
   </PropertyGroup>
   <ItemGroup><None Include="..\TedToolkit.Annotations.Ownership.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Ownership.Analyzer.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" /></ItemGroup>
   <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'"><MSBuild Projects="..\TedToolkit.Annotations.Ownership.Analyzer\TedToolkit.Annotations.Ownership.Analyzer.csproj" Targets="Build" Properties="Configuration=$(Configuration)" /></Target>

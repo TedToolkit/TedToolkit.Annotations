@@ -5,6 +5,7 @@
   <PropertyGroup>
     <Title>Assertion precondition annotations</Title>
     <Description>Source-generated precondition annotations backed by TedToolkit.Assertions.</Description>
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\TedToolkit.Annotations.Documentations\TedToolkit.Annotations.Documentations.csproj" />

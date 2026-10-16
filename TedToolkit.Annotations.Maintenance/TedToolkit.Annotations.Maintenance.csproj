@@ -5,6 +5,7 @@
   <PropertyGroup>
     <Title>Maintenance annotations</Title>
     <Description>Source-level annotations for technical debt and planned maintenance.</Description>
+    <IsAotCompatible Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">true</IsAotCompatible>
   </PropertyGroup>
   <ItemGroup><None Include="..\TedToolkit.Annotations.Maintenance.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Maintenance.Analyzer.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" /></ItemGroup>
   <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'"><MSBuild Projects="..\TedToolkit.Annotations.Maintenance.Analyzer\TedToolkit.Annotations.Maintenance.Analyzer.csproj" Targets="Build" Properties="Configuration=$(Configuration)" /></Target>

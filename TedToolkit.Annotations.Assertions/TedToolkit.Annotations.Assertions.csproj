@@ -23,4 +23,9 @@
   <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'">
     <MSBuild Projects="..\TedToolkit.Annotations.Assertions.CodeFixes\TedToolkit.Annotations.Assertions.CodeFixes.csproj" Targets="Build" Properties="Configuration=$(Configuration)" />
   </Target>
+
+  <ItemGroup>
+    <None Include="../.agents/skills/document-assertion-preconditions/**/*"
+          Pack="true" PackagePath="skills/document-assertion-preconditions/" />
+  </ItemGroup>
 </Project>

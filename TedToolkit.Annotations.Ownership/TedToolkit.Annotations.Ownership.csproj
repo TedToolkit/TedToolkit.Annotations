@@ -9,4 +9,9 @@
   </PropertyGroup>
   <ItemGroup><None Include="..\TedToolkit.Annotations.Ownership.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Ownership.Analyzer.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" /></ItemGroup>
   <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'"><MSBuild Projects="..\TedToolkit.Annotations.Ownership.Analyzer\TedToolkit.Annotations.Ownership.Analyzer.csproj" Targets="Build" Properties="Configuration=$(Configuration)" /></Target>
+
+  <ItemGroup>
+    <None Include="../.agents/skills/use-ownership-annotations/**/*"
+          Pack="true" PackagePath="skills/use-ownership-annotations/" />
+  </ItemGroup>
 </Project>

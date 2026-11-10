@@ -13,6 +13,8 @@ documentation remains the caller-facing contract.
 
 Document ownership, non-mutation, maintenance, or boxing separately when they describe independent contracts.
 
+When the project uses generated assertion-backed attributes, read [assertion preconditions](references/assertion-preconditions.md) before drafting or enforcing the parameter contract.
+
 ## Steps
 
 1. Confirm that the active project references `TedToolkit.Annotations.Documentations`; otherwise

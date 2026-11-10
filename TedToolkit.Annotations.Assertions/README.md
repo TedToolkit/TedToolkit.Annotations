@@ -33,6 +33,10 @@ The bundled analyzer reports a parameter precondition that is not enforced by th
 
 Targets .NET 6.0 through .NET 10.0, .NET Framework 4.7.2 and 4.8, and .NET Standard 2.0 and 2.1. `TedToolkit.Assertions` and `TedToolkit.Annotations.Documentations` are package dependencies.
 
+## Agent skill
+
+The `use-documentation-annotations` skill ships in `TedToolkit.Annotations.Documentations`, which this package restores as a dependency. If your project references only this package, get the resolved `TedToolkit.Annotations.Documentations` version from `dotnet package list --include-transitive` and import the skill with `dotnet-package-skills install --package TedToolkit.Annotations.Documentations@<resolved-version>`.
+
 ## Related documentation
 
 - [Repository overview](../README.md)

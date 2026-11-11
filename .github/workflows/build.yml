@@ -9,7 +9,7 @@ permissions:
 jobs:
   run-build-project:
     if: github.ref != 'refs/heads/main'
-    uses: TedToolkit/TedToolkit/.github/workflows/build.yml@76a50006d063f1e50d6d3286afbf6076c4aa36ce
+    uses: TedToolkit/TedToolkit/.github/workflows/build.yml@2e45980886585f0896c496aaafd38e6d0930d567
     secrets: inherit
 
   publish:
@@ -18,7 +18,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: TedToolkit/TedToolkit/.github/actions/publish-nuget@76a50006d063f1e50d6d3286afbf6076c4aa36ce
+      - uses: TedToolkit/TedToolkit/.github/actions/publish-nuget@2e45980886585f0896c496aaafd38e6d0930d567
         env:
           NUGET_API_KEY: ${{ secrets.NUGET__APIKEY }}
           NUGET_SOURCE: ${{ vars.NUGET__SOURCE }}
@@ -31,4 +31,4 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: TedToolkit/TedToolkit/.github/actions/maintain-release-pr@76a50006d063f1e50d6d3286afbf6076c4aa36ce
+      - uses: TedToolkit/TedToolkit/.github/actions/maintain-release-pr@2e45980886585f0896c496aaafd38e6d0930d567

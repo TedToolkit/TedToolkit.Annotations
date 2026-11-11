@@ -6,7 +6,6 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.0.0" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
-    <PackageVersion Include="Sourcy.DotNet" Version="1.1.1" />
     <PackageVersion Include="TedToolkit.Assertions" Version="2026.11.11" />
     <PackageVersion Include="TedToolkit.RoslynHelper" Version="2026.11.11" />
     <PackageVersion Include="TUnit" Version="1.59.0" />

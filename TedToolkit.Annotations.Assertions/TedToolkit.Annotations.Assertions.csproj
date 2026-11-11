@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\externals\TedToolkit\props\NugetPackage.props" />
-  <Import Project="..\externals\TedToolkit\props\AlmostAllFrameworks.props" />
-  <Import Project="..\externals\TedToolkit\props\CodeAnalysis.props" />
+  <Import Project="NugetPackage.props" Sdk="TedToolkit.Build.Sdk" />
+  <Import Project="AlmostAllFrameworks.props" Sdk="TedToolkit.Build.Sdk" />
+  <Import Project="CodeAnalysis.props" Sdk="TedToolkit.Build.Sdk" />
   <PropertyGroup>
     <Title>Assertion precondition annotations</Title>
     <Description>Source-generated precondition annotations backed by TedToolkit.Assertions.</Description>

@@ -9,4 +9,9 @@
   </PropertyGroup>
   <ItemGroup><None Include="..\TedToolkit.Annotations.Maintenance.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Maintenance.Analyzer.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" /></ItemGroup>
   <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'"><MSBuild Projects="..\TedToolkit.Annotations.Maintenance.Analyzer\TedToolkit.Annotations.Maintenance.Analyzer.csproj" Targets="Build" Properties="Configuration=$(Configuration)" /></Target>
+
+  <ItemGroup>
+    <None Include="../.agents/skills/use-maintenance-annotations/**/*"
+          Pack="true" PackagePath="skills/use-maintenance-annotations/" />
+  </ItemGroup>
 </Project>

@@ -9,4 +9,9 @@
   </PropertyGroup>
   <ItemGroup><None Include="..\TedToolkit.Annotations.Const.Analyzer\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Const.Analyzer.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" /><None Include="..\TedToolkit.Annotations.Const.CodeFixes\bin\$(Configuration)\netstandard2.0\TedToolkit.Annotations.Const.CodeFixes.dll" Pack="true" PackagePath="analyzers\dotnet\cs" Visible="false" /></ItemGroup>
   <Target Name="BuildDomainAnalyzer" BeforeTargets="GenerateNuspec" Condition="'$(NoBuild)' != 'true'"><MSBuild Projects="..\TedToolkit.Annotations.Const.CodeFixes\TedToolkit.Annotations.Const.CodeFixes.csproj" Targets="Build" Properties="Configuration=$(Configuration)" /></Target>
+
+  <ItemGroup>
+    <None Include="../.agents/skills/use-const-annotations/**/*"
+          Pack="true" PackagePath="skills/use-const-annotations/" />
+  </ItemGroup>
 </Project>

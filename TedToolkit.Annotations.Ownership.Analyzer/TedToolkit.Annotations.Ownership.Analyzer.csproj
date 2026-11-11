@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\externals\TedToolkit\props\CodeAnalysis.props" />
+  <Import Project="CodeAnalysis.props" Sdk="TedToolkit.Build.Sdk" />
   <PropertyGroup><TargetFramework>netstandard2.0</TargetFramework><IsPackable>false</IsPackable><IsRoslynAnalyzer>true</IsRoslynAnalyzer><EnforceExtendedAnalyzerRules>false</EnforceExtendedAnalyzerRules><RootNamespace>TedToolkit.Annotations.Analyzer</RootNamespace></PropertyGroup>
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute"><_Parameter1>TedToolkit.Annotations.Ownership.Tests</_Parameter1></AssemblyAttribute>

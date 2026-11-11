@@ -17,11 +17,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: TedToolkit/TedToolkit/.github/actions/publish-nuget@a29734aa1cebfef142bd248a6259f8b9f937430b
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET__APIKEY }}
-          NUGET_SOURCE: ${{ vars.NUGET__SOURCE }}
+        with:
+          nuget-user: ArchiTed
 
   release-pr:
     needs: run-build-project

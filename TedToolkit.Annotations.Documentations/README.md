@@ -63,7 +63,7 @@ Use the enum overloads, such as `SideEffectKind` and `MayBlockKind`, when a stan
 
 ## Compatibility
 
-Targets .NET 6.0 through .NET 10.0, .NET Framework 4.7.2 and 4.8, and .NET Standard 2.0 and 2.1.
+Targets .NET 6.0 through .NET 11.0, .NET Framework 4.7.2 and 4.8, and .NET Standard 2.0 and 2.1.
 
 ## Related documentation
 

@@ -1,6 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="NugetPackage.props" Sdk="TedToolkit.Build.Sdk" />
   <Import Project="AlmostAllFrameworks.props" Sdk="TedToolkit.Build.Sdk" />
+  <PropertyGroup>
+    <TargetFrameworks>$(TargetFrameworks);net11.0</TargetFrameworks>
+  </PropertyGroup>
   <Import Project="CodeAnalysis.props" Sdk="TedToolkit.Build.Sdk" />
   <PropertyGroup>
     <Title>Ownership annotations</Title>

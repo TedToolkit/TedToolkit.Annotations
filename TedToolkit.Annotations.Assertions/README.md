@@ -31,7 +31,7 @@ The bundled analyzer reports a parameter precondition that is not enforced by th
 
 ## Compatibility
 
-Targets .NET 6.0 through .NET 10.0, .NET Framework 4.7.2 and 4.8, and .NET Standard 2.0 and 2.1. `TedToolkit.Assertions` and `TedToolkit.Annotations.Documentations` are package dependencies.
+Targets .NET 6.0 through .NET 11.0, .NET Framework 4.7.2 and 4.8, and .NET Standard 2.0 and 2.1. `TedToolkit.Assertions` and `TedToolkit.Annotations.Documentations` are package dependencies.
 
 ## Agent skill
 
